@@ -9,21 +9,21 @@
 +diomod  = 1               rdsmod  = 0               rbodymod= 1               rgatemod= 1             
 +permod  = 1               acnqsmod= 0               trnqsmod= 0             
 
-+tnom    = 27              toxe    = 1.1247806397e-09        toxp    = 9e-010          toxm    = 1.2e-009      
++tnom    = 27              toxe    = 1.2e-009        toxp    = 9e-010          toxm    = 1.2e-009      
 +dtox    = 3e-010          epsrox  = 3.9             wint    = 5e-009          lint    = 0             
 +ll      = 0               wl      = 0               lln     = 1               wln     = 1             
 +lw      = 0               ww      = 0               lwn     = 1               wwn     = 1             
 +lwl     = 0               wwl     = 0               xpart   = 0               toxref  = 1.2e-009      
 
-+vth0    = 0.648151850065         k1      = 0.4             k2      = 0               k3      = 0             
++vth0    = 0.68191         k1      = 0.4             k2      = 0               k3      = 0             
 +k3b     = 0               w0      = 2.5e-006        dvt0    = 1               dvt1    = 2             
 +dvt2    = 0               dvt0w   = 0               dvt1w   = 0               dvt2w   = 0             
 +dsub    = 0.1             minv    = 0.05            voffl   = 0               dvtp0   = 1e-011        
-+dvtp1   = 0.1             lpe0    = 0               lpeb    = 0               xj      = 4.80445133196e-09        
-+ngate   = 1e+023          ndep    = 6.96925122808e+18          nsd     = 2e+020          phin    = 0             
++dvtp1   = 0.1             lpe0    = 0               lpeb    = 0               xj      = 5e-009        
++ngate   = 1e+023          ndep    = 7e+018          nsd     = 2e+020          phin    = 0             
 +cdsc    = 0               cdscb   = 0               cdscd   = 0               cit     = 0             
 +voff    = -0.1014         nfactor = 1.6             eta0    = 0.0095          etab    = 0             
-+vfb     = -0.55           u0      = 0.0291869477235           ua      = 6e-010          ub      = 1.2e-018      
++vfb     = -0.55           u0      = 0.028           ua      = 6e-010          ub      = 1.2e-018      
 +uc      = 0               vsat    = 200000          a0      = 1               ags     = 0             
 +a1      = 0               a2      = 1               b0      = 0               b1      = 0             
 +keta    = 0.04            dwg     = 0               dwb     = 0               pclm    = 0.02          
@@ -78,21 +78,21 @@
 +diomod  = 1               rdsmod  = 0               rbodymod= 1               rgatemod= 1             
 +permod  = 1               acnqsmod= 0               trnqsmod= 0             
 
-+tnom    = 27              toxe    = 1.22e-009       toxp    = 9e-010          toxm    = 1.22e-009     
++tnom    = 27              toxe    = 1.2063772952e-09       toxp    = 9e-010          toxm    = 1.22e-009     
 +dtox    = 3.2e-010        epsrox  = 3.9             wint    = 5e-009          lint    = 8e-010        
 +ll      = 0               wl      = 0               lln     = 1               wln     = 1             
 +lw      = 0               ww      = 0               lwn     = 1               wwn     = 1             
 +lwl     = 0               wwl     = 0               xpart   = 0               toxref  = 1.22e-009     
 
-+vth0    = -0.6862         k1      = 0.4             k2      = -0.01           k3      = 0             
++vth0    = -0.630218847208         k1      = 0.4             k2      = -0.01           k3      = 0             
 +k3b     = 0               w0      = 2.5e-006        dvt0    = 1               dvt1    = 2             
 +dvt2    = -0.032          dvt0w   = 0               dvt1w   = 0               dvt2w   = 0             
 +dsub    = 0.1             minv    = 0.05            voffl   = 0               dvtp0   = 1e-011        
-+dvtp1   = 0.05            lpe0    = 0               lpeb    = 0               xj      = 7.2e-009      
-+ngate   = 1e+023          ndep    = 4.4e+018        nsd     = 2e+020          phin    = 0             
++dvtp1   = 0.05            lpe0    = 0               lpeb    = 0               xj      = 6.63118611079e-09      
++ngate   = 1e+023          ndep    = 4.46910163033e+18        nsd     = 2e+020          phin    = 0             
 +cdsc    = 0               cdscb   = 0               cdscd   = 0               cit     = 0             
 +voff    = -0.08           nfactor = 1.8             eta0    = 0.0095          etab    = 0             
-+vfb     = 0.55            u0      = 0.0075          ua      = 2e-009          ub      = 5e-019        
++vfb     = 0.55            u0      = 0.00705160914087          ua      = 2e-009          ub      = 5e-019        
 +uc      = 0               vsat    = 195000          a0      = 1               ags     = 1e-020        
 +a1      = 0               a2      = 1               b0      = 0               b1      = 0             
 +keta    = -0.047          dwg     = 0               dwb     = 0               pclm    = 0.12          

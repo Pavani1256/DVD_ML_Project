@@ -1,4 +1,6 @@
+
 from pathlib import Path
+import time
 
 import pandas as pd
 
@@ -7,82 +9,190 @@ from run_one_sample import make_netlist, run_ngspice
 
 ROOT = Path(__file__).resolve().parents[2]
 
-INPUT_FILE = ROOT / "data" / "samples" / "nmos_on_samples.csv"
+CASES = {
+    "nmos_on": "nmos",
+    "nmos_off": "nmos",
+    "pmos_on": "pmos",
+    "pmos_off": "pmos",
+}
+
+INPUT_DIR = ROOT / "data" / "samples"
 OUTPUT_DIR = ROOT / "data" / "processed"
 
-CASE = "nmos_on"
-TRANSISTOR = "nmos"
+BATCH_SIZE = 100
+PROGRESS_INTERVAL = 100
 
-# First test only 10 samples.
-LIMIT = 10
+INPUT_COLUMNS = [
+    "vdd", "temp", "w", "vd", "vs", "vg", "vb",
+    "vth0", "toxe", "ndep", "u0", "xj"
+]
+
+CURRENT_COLUMNS = ["id", "ig", "is", "ib"]
+OUTPUT_COLUMNS = INPUT_COLUMNS + CURRENT_COLUMNS
+
+
+def append_batch(rows, path):
+    """Append successful simulation results, writing a header only once."""
+
+    if not rows:
+        return
+
+    batch_df = pd.DataFrame(rows, columns=OUTPUT_COLUMNS)
+
+    batch_df.to_csv(
+        path,
+        mode="a",
+        header=not path.exists(),
+        index=False
+    )
+
+
+def append_log(rows, path):
+    """Append KCL or failure records, writing a header only once."""
+
+    if not rows:
+        return
+
+    pd.DataFrame(rows).to_csv(
+        path,
+        mode="a",
+        header=not path.exists(),
+        index=False
+    )
 
 
 def main():
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    df = pd.read_csv(INPUT_FILE).head(LIMIT)
+    # Refuse to overwrite existing full-run outputs.
+    for case in CASES:
+        files = [
+            OUTPUT_DIR / f"{case}.csv",
+            OUTPUT_DIR / f"{case}.partial.csv",
+            OUTPUT_DIR / f"{case}_kcl_checks.csv",
+            OUTPUT_DIR / f"{case}_failures.csv",
+        ]
 
-    results = []
-    failures = []
+        existing = [str(path.name) for path in files if path.exists()]
 
-    print(f"Running {len(df)} samples for {CASE}...\n")
-
-    for index, row in df.iterrows():
-
-        try:
-            # Generate a netlist for this sample.
-            netlist = make_netlist(row, TRANSISTOR)
-
-            # Run ngspice and collect terminal currents.
-            currents, _ = run_ngspice(netlist)
-
-            # Calculate KCL residual.
-            kcl = sum(currents.values())
-
-            # Combine inputs and outputs.
-            result = row.to_dict()
-            result.update(currents)
-            result["kcl_residual"] = kcl
-
-            results.append(result)
-
-            print(
-                f"Sample {index + 1}/{len(df)} completed | "
-                f"Id = {currents['id']:.6e} A | "
-                f"KCL = {kcl:.3e} A"
+        if existing:
+            raise FileExistsError(
+                f"Existing output files for {case}: {existing}. "
+                "Inspect or move them before starting a new run."
             )
 
-        except Exception as error:
-            failures.append({
-                "sample_index": index,
-                "error": str(error)
-            })
+    total_success = 0
+    total_failed = 0
 
-            print(f"Sample {index + 1} FAILED: {error}")
+    for case, transistor in CASES.items():
 
-    # Save successful results.
-    output_file = OUTPUT_DIR / f"{CASE}_test_10.csv"
+        input_file = INPUT_DIR / f"{case}_samples.csv"
+        partial_file = OUTPUT_DIR / f"{case}.partial.csv"
+        final_file = OUTPUT_DIR / f"{case}.csv"
 
-    if results:
-        output_df = pd.DataFrame(results)
-        output_df.to_csv(output_file, index=False)
+        kcl_file = OUTPUT_DIR / f"{case}_kcl_checks.csv"
+        failure_file = OUTPUT_DIR / f"{case}_failures.csv"
 
-    # Save failures separately, if any.
-    if failures:
-        failure_file = OUTPUT_DIR / f"{CASE}_failures.csv"
-        pd.DataFrame(failures).to_csv(failure_file, index=False)
+        df = pd.read_csv(input_file)
 
-    print("\n---------- SUMMARY ----------")
-    print(f"Total samples attempted: {len(df)}")
-    print(f"Successful simulations: {len(results)}")
-    print(f"Failed simulations: {len(failures)}")
+        if len(df) != 10_000:
+            raise ValueError(
+                f"{case}: expected 10,000 samples, found {len(df)}"
+            )
 
-    if results:
-        print(f"Output saved to: {output_file}")
+        print(f"\n========== {case.upper()} ==========")
+        print(f"Starting {len(df)} simulations...")
 
-        max_kcl = max(abs(item["kcl_residual"]) for item in results)
-        print(f"Maximum absolute KCL residual: {max_kcl:.6e} A")
+        successful_batch = []
+        kcl_batch = []
+        failure_batch = []
+
+        success_count = 0
+        failure_count = 0
+
+        start_time = time.time()
+
+        for index, row in df.iterrows():
+
+            try:
+                netlist = make_netlist(row, transistor)
+                currents, _ = run_ngspice(netlist)
+
+                kcl = sum(currents.values())
+
+                result = {
+                    column: row[column]
+                    for column in INPUT_COLUMNS
+                }
+                result.update(currents)
+
+                successful_batch.append(result)
+
+                kcl_batch.append({
+                    "sample_index": index,
+                    "kcl_residual": kcl
+                })
+
+                success_count += 1
+
+            except Exception as error:
+
+                failure_batch.append({
+                    "sample_index": index,
+                    "error": str(error)
+                })
+
+                failure_count += 1
+
+            # Write every 100 attempted samples.
+            if (index + 1) % BATCH_SIZE == 0:
+
+                append_batch(successful_batch, partial_file)
+                append_log(kcl_batch, kcl_file)
+                append_log(failure_batch, failure_file)
+
+                successful_batch.clear()
+                kcl_batch.clear()
+                failure_batch.clear()
+
+            if (index + 1) % PROGRESS_INTERVAL == 0:
+
+                elapsed = time.time() - start_time
+
+                print(
+                    f"{index + 1}/{len(df)} attempted | "
+                    f"Success: {success_count} | "
+                    f"Failed: {failure_count} | "
+                    f"Elapsed: {elapsed / 60:.1f} min"
+                )
+
+        # Save the remaining records after the loop.
+        append_batch(successful_batch, partial_file)
+        append_log(kcl_batch, kcl_file)
+        append_log(failure_batch, failure_file)
+
+        # Rename the partial file only after this case finishes.
+        if partial_file.exists():
+            partial_file.replace(final_file)
+
+        elapsed = time.time() - start_time
+
+        print(f"\nFinished {case}.")
+        print(f"Successful: {success_count}")
+        print(f"Failed: {failure_count}")
+        print(f"Time: {elapsed / 60:.2f} minutes")
+
+        if final_file.exists():
+            print(f"Dataset saved: {final_file}")
+
+        total_success += success_count
+        total_failed += failure_count
+
+    print("\n========== COMPLETE SUMMARY ==========")
+    print(f"Total successful simulations: {total_success}")
+    print(f"Total failed simulations: {total_failed}")
+    print(f"Total attempted: {total_success + total_failed}")
 
 
 if __name__ == "__main__":
