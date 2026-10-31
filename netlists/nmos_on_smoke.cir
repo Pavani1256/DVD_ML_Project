@@ -1,0 +1,45 @@
+* DVD ML Project - Part A
+* NMOS ON - Initial model verification
+* Technology: 16nm LP
+* Nominal VDD: 0.9V
+
+.include "models/16nm_LP.pm"
+
+.options gmin=1e-18 abstol=1e-18
++ reltol=1e-6 vntol=1e-9
+
+.temp 27
+
+* Independent voltage sources for all four terminals
+VDS d 0 DC 0.45
+VGS g 0 DC 0.9
+VSS s 0 DC 0.10
+VBS b 0 DC 0
+
+* NMOS transistor
+M1 d g s b nmos L=16n W=16n
+
+.control
+op
+
+echo "===== NMOS ON RESULTS ====="
+
+* Terminal currents entering the transistor
+let Id = -i(VDS)
+let Ig = -i(VGS)
+let Is = -i(VSS)
+let Ib = -i(VBS)
+
+print Id
+print Ig
+print Is
+print Ib
+
+* Kirchhoff current check
+let KCL = Id + Ig + Is + Ib
+print KCL
+
+quit
+.endc
+
+.end
