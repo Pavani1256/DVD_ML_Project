@@ -6,8 +6,8 @@ __pycache__/
 data/raw/*.csv
 data/processed/*.csv
 
-saved_models/
-results/metrics
+# saved_models/
+# results/metrics
 *.log
 *.raw
 *.tmp
