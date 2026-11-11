@@ -5,6 +5,8 @@ __pycache__/
 
 data/raw/*.csv
 data/processed/*.csv
+data/gate_validation/
+data/spice_work/
 
 # saved_models/
 # results/metrics

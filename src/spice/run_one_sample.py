@@ -88,7 +88,12 @@ def make_modified_model(original_text, transistor, row):
 # Generate a SPICE netlist for one sample
 # --------------------------------------------------
 
-def make_netlist(row, transistor):
+def make_netlist(row, transistor, work_dir=None):
+    """Write the modified model and netlist into work_dir (one per worker
+    process when simulations run in parallel) and return the netlist path."""
+
+    work_dir = Path(work_dir) if work_dir is not None else WORK_DIR
+    work_dir.mkdir(parents=True, exist_ok=True)
 
     original_model = MODEL_FILE.read_text()
 
@@ -99,7 +104,7 @@ def make_netlist(row, transistor):
     )
 
     # Save the temporary model file.
-    modified_model_path = WORK_DIR / "sample_model.pm"
+    modified_model_path = work_dir / "sample_model.pm"
     modified_model_path.write_text(modified_model)
 
     # Use forward slashes in the SPICE include path.
@@ -140,7 +145,7 @@ quit
 .end
 """
 
-    netlist_path = WORK_DIR / "one_sample.cir"
+    netlist_path = work_dir / "one_sample.cir"
     netlist_path.write_text(netlist)
 
     return netlist_path

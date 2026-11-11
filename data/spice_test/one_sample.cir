@@ -1,18 +1,18 @@
 
 * One-sample transistor simulation
 
-.include "C:/Users/hp/Desktop/DVD_project/data/spice_test/sample_model.pm"
+.include "C:/Users/sannjana punna/DVD_ML_Project/data/spice_test/sample_model.pm"
 
 .options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9
 
-.temp 1.51588066658
+.temp 39.6015369311
 
-VDS d 0 DC 0.756101312346
-VGS g 0 DC 0.949676487799
-VSS s 0 DC 0.200312041612
-VBS b 0 DC 0.949676487799
+VDS d 0 DC 0.128115693723
+VGS g 0 DC 0
+VSS s 0 DC 0.505440843953
+VBS b 0 DC 0
 
-M1 d g s b pmos L=1.6e-08 W=1.05998563191e-07
+M1 d g s b nmos L=1.6e-08 W=3.73296769012e-08
 
 .control
 op
