@@ -1,6 +1,6 @@
 tech node : 16nm_LP
 VDD : 0.9
-Testing : 8-bit parity checker (Part C: see [README_part_c.md](README_part_c.md))
+Testing : 8-bit parity checker (Part C: see [README_part_c.md](README_part_c.md); 99.19% mean accuracy)
 Simulator : ngspice-44.2 (`ngspice_con.exe`) on Windows; any `ngspice` on `PATH` on Linux
 
 ## Run order (from the project root)
