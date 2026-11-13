@@ -25,7 +25,9 @@ Add --reuse-spice to re-score new models against the cached SPICE results.
 from __future__ import annotations
 
 import argparse
+import os
 import re
+import shutil
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -449,7 +451,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--corners", type=int, default=200)
-    parser.add_argument("--ngspice", default="ngspice_con.exe")
+    parser.add_argument("--ngspice", default=os.environ.get("NGSPICE") or shutil.which("ngspice") or shutil.which("ngspice_con.exe") or "ngspice_con.exe")
     parser.add_argument("--wn", type=float, default=DEFAULT_WN, help="NMOS width (m)")
     parser.add_argument("--wp", type=float, default=DEFAULT_WP, help="PMOS width (m)")
     parser.add_argument("--workers", type=int, default=12)

@@ -27,6 +27,10 @@ from pathlib import Path
 
 # Avoids a noisy (harmless) physical-core probe in joblib/loky on Windows.
 os.environ.setdefault("LOKY_MAX_CPU_COUNT", str(os.cpu_count() or 4))
+# Eight training processes run in parallel; one BLAS thread each avoids
+# oversubscribing the CPU (with default threading the MLP fits ran ~4x slower).
+for _var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
 
 import joblib
 import matplotlib
@@ -57,6 +61,7 @@ from transistor_ml import (  # noqa: E402
     FEATURES,
     FRAMES,
     SIGN_CONSTANT_THRESHOLD,
+    PerTerminalRegressor,
     TARGETS,
     SignModel,
     TransistorModel,
@@ -82,6 +87,13 @@ EDGE_DATASETS = {
     case: ROOT / "data" / "processed" / f"{case}_edge.csv" for case in DATASETS
 }
 USE_EDGE_SAMPLES = os.environ.get("USE_EDGE_SAMPLES", "1") != "0"
+# Supplementary rail samples (src/data_generation/generate_rail_samples.py):
+# Vd and Vs on/next to the rails, where transistors sit inside logic gates.
+# Set USE_RAIL_SAMPLES=0 in the environment to leave them out.
+RAIL_DATASETS = {
+    case: ROOT / "data" / "processed" / f"{case}_rail.csv" for case in DATASETS
+}
+USE_RAIL_SAMPLES = os.environ.get("USE_RAIL_SAMPLES", "1") != "0"
 
 MODEL_DIR = ROOT / "saved_models"
 METRIC_DIR = ROOT / "results" / "metrics"
@@ -92,7 +104,8 @@ PLOT_DIR = ROOT / "results" / "plots"
 # CANDIDATE MODELS (family -> config name -> estimator)
 # ============================================================
 
-N_JOBS_PER_CASE = 2   # eight (case, frame) jobs train in parallel
+N_JOBS_PER_CASE = 1   # eight (case, frame) jobs train in parallel
+MLP_SEEDS = tuple(range(int(os.environ.get("MLP_SEEDS", "1"))))
 
 
 def get_candidates():
@@ -105,9 +118,12 @@ def get_candidates():
     """
 
     def forest(cls, max_features):
+        # 100 trees, min leaf 2: with the larger combined dataset 300 fully
+        # grown multi-output trees took ~1 GB per forest, more than eight
+        # parallel jobs fit in memory. Validation error changed only slightly.
         return cls(
-            n_estimators=300,
-            min_samples_leaf=1,
+            n_estimators=100,
+            min_samples_leaf=2,
             max_features=max_features,
             random_state=SEED,
             n_jobs=N_JOBS_PER_CASE,
@@ -127,28 +143,41 @@ def get_candidates():
         ))
 
     def mlp(hidden):
-        return TransformedTargetRegressor(
-            regressor=Pipeline([
-                ("scaler", StandardScaler()),
-                ("mlp", MLPRegressor(
-                    hidden_layer_sizes=hidden,
-                    activation="tanh",
-                    solver="lbfgs",
-                    alpha=1e-6,
-                    max_iter=15000,
-                    max_fun=300000,
-                    tol=1e-10,
-                    random_state=SEED,
-                )),
-            ]),
-            transformer=StandardScaler(),
+        """One network per terminal current (PerTerminalRegressor).
+
+        A shared 4-output network had to split its capacity between channel,
+        gate-tunnelling and junction currents; separate networks reduced the
+        validation error of the gate-leakage-critical terminals ~2x.
+        """
+        def make(seed):
+            return TransformedTargetRegressor(
+                regressor=Pipeline([
+                    ("scaler", StandardScaler()),
+                    ("mlp", MLPRegressor(
+                        hidden_layer_sizes=hidden,
+                        activation="tanh",
+                        solver="lbfgs",
+                        alpha=1e-7,
+                        max_iter=4000,
+                        max_fun=40000,
+                        tol=1e-12,
+                        random_state=SEED + seed,
+                    )),
+                ]),
+                transformer=StandardScaler(),
+            )
+        # Train each network only on currents the simulator resolves
+        # (>= abstol); see PerTerminalRegressor. This halved the PMOS OFF
+        # ib/is validation error in a pilot run.
+        return PerTerminalRegressor(
+            make, seeds=MLP_SEEDS, min_log=float(np.log10(ERROR_FLOOR))
         )
 
     return {
-        "RandomForest": {"300 trees,mf=0.5": forest(RandomForestRegressor, 0.5)},
-        "ExtraTrees": {"300 trees,mf=1.0": forest(ExtraTreesRegressor, 1.0)},
+        "RandomForest": {"100 trees,mf=0.5": forest(RandomForestRegressor, 0.5)},
+        "ExtraTrees": {"100 trees,mf=1.0": forest(ExtraTreesRegressor, 1.0)},
         "GradientBoosting": {"lr=0.05,leaves=31": hgb(0.05, 31)},
-        "MLP": {"64x3,tanh,lbfgs": mlp((64, 64, 64))},
+        "MLP": {"per-terminal 64x3,tanh,lbfgs": mlp((64, 64, 64))},
     }
 
 
@@ -156,24 +185,47 @@ def get_candidates():
 # METRICS
 # ============================================================
 
+# Model selection ignores currents below 100x the SPICE abstol (1e-18 A).
+# The edge/rail samples put terminals exactly on the gate/body rail, where
+# e.g. the PMOS OFF gate and body currents are exactly 0 A; any non-zero
+# prediction then counts as a ~1000% error and these unresolved, physically
+# irrelevant currents dominated the P95 and steered the selection.
+RESOLVED_CURRENT = 1e-16
+
+
+def selection_score(metrics):
+    """Validation P95 on resolved currents; plain P95 if none are resolved
+    (e.g. NMOS OFF ig, which is below 1e-16 A in every sample)."""
+    score = metrics["p95_resolved_error_percent"]
+    return metrics["p95_error_percent"] if np.isnan(score) else score
+
+
 def terminal_metrics(y_true, y_pred):
     error = relative_error_percent(y_true, y_pred)
     log_true = np.log10(np.maximum(np.abs(y_true), ERROR_FLOOR))
     log_pred = np.log10(np.maximum(np.abs(y_pred), ERROR_FLOOR))
+    resolved = np.abs(y_true) >= RESOLVED_CURRENT
     return {
         "R2": r2_score(y_true, y_pred),
         "R2_log": r2_score(log_true, log_pred),
         "median_error_percent": float(np.median(error)),
         "p95_error_percent": float(np.percentile(error, 95)),
+        "p95_resolved_error_percent": (
+            float(np.percentile(error[resolved], 95)) if resolved.any() else np.nan
+        ),
     }
 
 
 def pooled_metrics(Y_true, Y_pred):
     error = relative_error_percent(Y_true, Y_pred)
+    resolved = np.abs(Y_true) >= RESOLVED_CURRENT
     return {
         "R2": r2_score(Y_true, Y_pred, multioutput="uniform_average"),
         "median_error_percent": float(np.median(error)),
         "p95_error_percent": float(np.percentile(error, 95)),
+        "p95_resolved_error_percent": (
+            float(np.percentile(error[resolved], 95)) if resolved.any() else np.nan
+        ),
     }
 
 
@@ -264,6 +316,8 @@ def load_case_data(case):
     sources = {"uniform": load_split(DATASETS[case])}
     if USE_EDGE_SAMPLES and EDGE_DATASETS[case].exists():
         sources["edge"] = load_split(EDGE_DATASETS[case])
+    if USE_RAIL_SAMPLES and RAIL_DATASETS[case].exists():
+        sources["rail"] = load_split(RAIL_DATASETS[case])
 
     names = ("X_train", "Y_train", "X_val", "Y_val", "X_test", "Y_test")
     data = {
@@ -298,6 +352,7 @@ def fit_frame(job):
     L_train = log_target(Y_frame)
 
     fitted, rows, log = {}, [], []
+    best = [(np.inf, None)] * len(TARGETS)
     scorer = TransistorModel(case, fitted, [None] * len(TARGETS), {frame: signs})
 
     for family, configs in get_candidates().items():
@@ -315,11 +370,19 @@ def fit_frame(job):
 
             base = {"case": case, "model": family, "config": config, "frame": frame}
             for t, target in enumerate(TARGETS):
-                rows.append({
-                    **base, "current": target,
-                    **terminal_metrics(Y_val[:, t], Y_val_pred[:, t]),
-                })
+                metrics_t = terminal_metrics(Y_val[:, t], Y_val_pred[:, t])
+                rows.append({**base, "current": target, **metrics_t})
+                if selection_score(metrics_t) < best[t][0]:
+                    best[t] = (selection_score(metrics_t), name)
             rows.append({**base, "current": "all", **pooled})
+
+            # Selection (train_case) picks, per terminal, the lowest validation
+            # P95 over all frames and families, so only a candidate that is
+            # currently best in this frame for some terminal can be selected.
+            # Dropping the others keeps memory bounded (forests are large).
+            keep = {name for _, name in best}
+            for other in [n for n in fitted if n not in keep]:
+                del fitted[other]
 
     return {
         "case": case,
@@ -369,16 +432,17 @@ def train_case(case, frame_results):
     comparison = pd.DataFrame(comparison_rows)
 
     # --------------------------------------------------------
-    # Per-terminal selection on validation P95
+    # Per-terminal selection on validation P95 (resolved currents, see
+    # RESOLVED_CURRENT)
     # --------------------------------------------------------
 
     selection = []
     for target in TARGETS:
         rows = comparison[comparison["current"] == target]
-        best = rows.loc[rows["p95_error_percent"].idxmin()]
+        best = rows.loc[rows.apply(selection_score, axis=1).idxmin()]
         selection.append(f"{best['frame']}:{best['model']}[{best['config']}]")
 
-    say("\nSelected per terminal (validation P95):")
+    say("\nSelected per terminal (validation P95, resolved currents):")
     for target, name in zip(TARGETS, selection):
         say(f"  {target}: {name}")
 
@@ -463,19 +527,46 @@ def main():
 
     # Every (case, target frame) is independent: fit all eight in parallel,
     # then select and test each case.
-    jobs = [(case, frame) for case in DATASETS for frame in FRAMES]
-    with ProcessPoolExecutor(max_workers=len(jobs)) as pool:
-        frame_results = list(pool.map(fit_frame, jobs))
+    # TRAIN_CASES=pmos_off (comma separated) retrains only those cases; the
+    # combined metric tables keep the existing rows of the other cases.
+    cases = [c for c in os.environ.get("TRAIN_CASES", ",".join(DATASETS)).split(",") if c]
+    unknown = set(cases) - set(DATASETS)
+    if unknown:
+        raise ValueError(f"Unknown TRAIN_CASES: {sorted(unknown)}")
+    jobs = [(case, frame) for case in cases for frame in FRAMES]
+    # The fits take ~2 h; checkpoint them so a failure in the selection /
+    # test / save step below can be rerun with REUSE_FITS=1 without refitting.
+    checkpoint = ROOT / "data" / "training_cache" / "frame_results.joblib"
+    if os.environ.get("REUSE_FITS") == "1" and checkpoint.exists():
+        frame_results = [r for r in joblib.load(checkpoint) if r["case"] in cases]
+    else:
+        with ProcessPoolExecutor(max_workers=len(jobs)) as pool:
+            frame_results = list(pool.map(fit_frame, jobs))
+        checkpoint.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(frame_results, checkpoint, compress=3)
     results = [
         train_case(case, [r for r in frame_results if r["case"] == case])
-        for case in DATASETS
+        for case in cases
     ]
+
+    def merged(new, name):
+        """Keep rows of cases that were not retrained in this run."""
+        path = METRIC_DIR / name
+        if len(cases) < len(DATASETS) and path.exists():
+            old = pd.read_csv(path)
+            new = pd.concat([old[~old["case"].isin(cases)], new], ignore_index=True)
+            order = {c: i for i, c in enumerate(DATASETS)}
+            new = new.sort_values("case", key=lambda c: c.map(order), kind="stable")
+        new.to_csv(path, index=False)
+        return new
 
     for *_, log in results:
         print(log + "\n")
 
-    comparison = pd.concat([r[0] for r in results], ignore_index=True)
-    comparison.to_csv(METRIC_DIR / "model_comparison_detailed.csv", index=False)
+    comparison = merged(
+        pd.concat([r[0] for r in results], ignore_index=True),
+        "model_comparison_detailed.csv",
+    ).reset_index(drop=True)
 
     # Deliverable table: 4 model families x 4 cases on validation data,
     # each family at its best (frame, config) by pooled P95.
@@ -485,16 +576,13 @@ def main():
     ].drop(columns=["current", "R2_log"])
     summary.to_csv(METRIC_DIR / "model_comparison.csv", index=False)
 
-    pd.concat([r[1] for r in results], ignore_index=True).to_csv(
-        METRIC_DIR / "final_test_metrics_per_current.csv", index=False
-    )
-    pd.DataFrame([r[2] for r in results]).to_csv(
-        METRIC_DIR / "final_test_results.csv", index=False
-    )
+    merged(pd.concat([r[1] for r in results], ignore_index=True),
+           "final_test_metrics_per_current.csv")
+    merged(pd.DataFrame([r[2] for r in results]), "final_test_results.csv")
 
     pd.set_option("display.width", 200)
     print("=" * 60)
-    print("ALL FOUR CASES TRAINED SUCCESSFULLY")
+    print(f"TRAINED: {', '.join(cases)}")
     print("=" * 60)
     print(summary.to_string(index=False))
 

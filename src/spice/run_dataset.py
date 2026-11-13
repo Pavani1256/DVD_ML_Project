@@ -68,13 +68,18 @@ def main():
         "--suffix", default="",
         help="Dataset suffix, e.g. _edge for the supplementary rail-edge samples"
     )
+    parser.add_argument(
+        "--cases", nargs="+", choices=CASES, default=list(CASES),
+        help="Cases to simulate (default: all four)",
+    )
     args = parser.parse_args()
     suffix = args.suffix
+    cases = {case: CASES[case] for case in args.cases}
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Refuse to overwrite existing full-run outputs.
-    for case in CASES:
+    for case in cases:
         files = [
             OUTPUT_DIR / f"{case}{suffix}.csv",
             OUTPUT_DIR / f"{case}{suffix}_kcl_checks.csv",
@@ -94,7 +99,7 @@ def main():
 
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
 
-        for case, transistor in CASES.items():
+        for case, transistor in cases.items():
 
             df = pd.read_csv(INPUT_DIR / f"{case}{suffix}_samples.csv")
 

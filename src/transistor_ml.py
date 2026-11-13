@@ -159,12 +159,116 @@ ENGINEERED_FEATURES = FEATURES + [
 ]
 
 
+# BSIM4 gate-tunnelling constants: the A, B prefactors of the BSIM4 manual
+# (electron tunnelling for NMOS, hole tunnelling for PMOS) and the fixed
+# tunnelling parameters of models/16nm_LP.pm (igcmod = igbmod = 1).
+TUNNEL_CONSTANTS = {
+    "nmos": {"A": 4.97232e-7, "B": 7.45669e11, "aigc": 0.015211, "bigc": 0.0027432,
+             "cigc": 0.002, "aigbinv": 0.014, "bigbinv": 0.004, "cigbinv": 0.004,
+             "toxref": 1.2e-9},
+    "pmos": {"A": 3.42537e-7, "B": 1.16645e12, "aigc": 0.0097, "bigc": 0.00125,
+             "cigc": 0.0008, "aigbinv": 0.014, "bigbinv": 0.004, "cigbinv": 0.004,
+             "toxref": 1.22e-9},
+}
+WINT = 5e-9
+
+
+def tunnel_features(X_canonical: np.ndarray, device: str) -> np.ndarray:
+    """log of BSIM4-style gate-tunnelling estimates (canonical frame).
+
+    In the 16nm LP card the gate current (Igc, Igb) is a large share of the
+    leakage that gates draw from VDD (e.g. the ON PMOS of an inverter with
+    input 0), and it depends exponentially on toxe and on the oxide voltage:
+        I ~ Weff * (toxref/toxe) / toxe^2 * Vox * Vaux
+              * exp(-B * toxe * (a - b*Vox) * (1 + c*Vox)).
+    For the gate-source, gate-drain and gate-body voltages this returns the
+    log estimate and its exponent, so the regressors only learn a correction.
+    """
+    f = {name: X_canonical[:, i] for i, name in enumerate(FEATURES)}
+    c = TUNNEL_CONSTANTS[device]
+    polarity = 1.0 if device == "nmos" else -1.0
+    toxe = f["toxe"]
+    weff = np.maximum(f["w"] - 2 * WINT, 1e-9)
+    vt = BOLTZMANN_OVER_Q * (f["temp"] + 273.15)
+    base = np.log(weff) + np.log(c["toxref"] / toxe) - 2.0 * np.log(toxe)
+    columns = []
+    for terminal, (a, b, cc) in (
+        ("vs", ("aigc", "bigc", "cigc")),
+        ("vd", ("aigc", "bigc", "cigc")),
+        ("vb", ("aigbinv", "bigbinv", "cigbinv")),
+    ):
+        vox = np.abs(polarity * (f["vg"] - f[terminal]))
+        exponent = -c["B"] * toxe * (c[a] - c[b] * vox) * (1.0 + c[cc] * vox)
+        vaux = vt * np.logaddexp(0.0, (vox - np.abs(f["vth0"])) / vt)
+        columns.append(base + np.log(vox + 1e-3) + np.log(vaux + 1e-6) + exponent)
+        columns.append(exponent)
+    return np.column_stack(columns)
+
+
+TUNNEL_FEATURES = [
+    "log_tunnel_gs", "tunnel_exp_gs", "log_tunnel_gd", "tunnel_exp_gd",
+    "log_tunnel_gb", "tunnel_exp_gb",
+]
+
+
 def log_target(Y: np.ndarray) -> np.ndarray:
     return np.log10(np.abs(Y) + LOG_FLOOR)
 
 
 def magnitude_from_log(L: np.ndarray) -> np.ndarray:
     return np.maximum(10.0 ** L - LOG_FLOOR, 0.0)
+
+
+class PerTerminalRegressor:
+    """One independent regressor (or seed ensemble) per log-current target.
+
+    A single multi-output network has to share its hidden units between four
+    currents whose dependence on the inputs is very different (channel
+    current vs gate tunnelling vs junction leakage). Fitting each terminal on
+    its own lets every network spend all of its capacity on one current.
+    With several seeds per terminal, the log-current predictions are averaged.
+
+    make_estimator(seed) must return an unfitted single-output regressor.
+
+    min_log: if given, a terminal's network is trained only on samples whose
+    log target is >= min_log. With min_log = log10(1e-18 A), currents below
+    the SPICE abstol (numerically unresolved; e.g. exactly 0 A when a
+    terminal sits on the gate/body rail) are left out, so the network does
+    not spend capacity on a cliff down to the log floor. This only applies
+    to terminals where most samples are resolved.
+    """
+
+    def __init__(self, make_estimator, seeds=(0,), min_log=None):
+        self.make_estimator = make_estimator
+        self.seeds = tuple(seeds)
+        self.min_log = min_log
+        self.estimators_ = None
+
+    def fit(self, F, L):
+        F = np.asarray(F, dtype=float)
+        L = np.asarray(L, dtype=float)
+        self.estimators_ = []
+        for t in range(L.shape[1]):
+            keep = np.ones(len(L), dtype=bool)
+            if self.min_log is not None:
+                resolved = L[:, t] >= self.min_log
+                # Only drop unresolved samples if they are a minority; e.g.
+                # NMOS OFF ig is unresolved almost everywhere and keeps all.
+                if resolved.mean() >= 0.5:
+                    keep = resolved
+            self.estimators_.append([
+                self.make_estimator(seed).fit(F[keep], L[keep, t])
+                for seed in self.seeds
+            ])
+        # The factory may be a local closure, which cannot be pickled.
+        self.make_estimator = None
+        return self
+
+    def predict(self, F):
+        return np.column_stack([
+            np.mean([np.ravel(e.predict(F)) for e in members], axis=0)
+            for members in self.estimators_
+        ])
 
 
 class SignModel:
@@ -194,14 +298,18 @@ def model_features(X: np.ndarray, device: str):
     """
     X = np.asarray(X, dtype=float)
     mask = canonical_swap_mask(X, device)
+    X_canonical = swap_drain_source(X, mask)
     F = np.column_stack([
-        engineer_features(swap_drain_source(X, mask), device),
+        engineer_features(X_canonical, device),
+        tunnel_features(X_canonical, device),
         X[:, _VD], X[:, _VS], mask.astype(float),
     ])
     return F, mask
 
 
-MODEL_FEATURE_NAMES = ENGINEERED_FEATURES + ["raw_vd", "raw_vs", "swapped"]
+MODEL_FEATURE_NAMES = (
+    ENGINEERED_FEATURES + TUNNEL_FEATURES + ["raw_vd", "raw_vs", "swapped"]
+)
 
 
 def to_frame(Y: np.ndarray, mask: np.ndarray, frame: str) -> np.ndarray:

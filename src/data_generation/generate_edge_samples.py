@@ -33,11 +33,27 @@ rng = np.random.default_rng(SEED)
 
 
 def rail_biased(vdd):
+    """Bias Vd/Vs directly toward the logic rails that dominate gate leakage.
+
+    The original edge generator already concentrated samples near 0 and VDD, but
+    the leakage-sensitive operating points in complete gates are even more
+    concentrated at the exact rails. This distribution adds direct samples at
+    0 V and VDD, plus near-rail samples, so the model sees the true gate-bias
+    regime before the validation pass.
+    """
     n = len(vdd)
-    choice = rng.choice(3, size=n, p=[0.4, 0.4, 0.2])
-    offset = vdd * 10.0 ** rng.uniform(-7, -1, n)
+    choice = rng.choice(5, size=n, p=[0.25, 0.25, 0.25, 0.15, 0.10])
+    exact_low = np.zeros(n)
+    exact_high = vdd.copy()
+    near_low = vdd * 10.0 ** rng.uniform(-9, -2, n)
+    near_high = vdd - vdd * 10.0 ** rng.uniform(-9, -2, n)
     uniform = rng.uniform(0, 1, n) * vdd
-    return np.select([choice == 0, choice == 1], [offset, vdd - offset], uniform)
+    sample = np.select(
+        [choice == 0, choice == 1, choice == 2, choice == 3],
+        [exact_low, exact_high, near_low, near_high],
+        default=uniform,
+    )
+    return np.clip(sample, 0.0, vdd)
 
 
 def generate(device, state):

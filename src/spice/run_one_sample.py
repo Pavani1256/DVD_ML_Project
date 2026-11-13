@@ -1,6 +1,8 @@
-from pathlib import Path
+import os
 import re
+import shutil
 import subprocess
+from pathlib import Path
 
 import pandas as pd
 
@@ -17,7 +19,12 @@ INPUT_CSV = ROOT / "data" / "samples" / "nmos_on_samples.csv"
 WORK_DIR = ROOT / "data" / "spice_test"
 WORK_DIR.mkdir(parents=True, exist_ok=True)
 
-NGSPICE = "ngspice_con.exe"
+NGSPICE = (
+    os.environ.get("NGSPICE")
+    or shutil.which("ngspice")
+    or shutil.which("ngspice_con.exe")
+    or "ngspice_con.exe"
+)
 
 LMIN = 16e-9
 
