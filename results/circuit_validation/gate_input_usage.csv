@@ -1,0 +1,5 @@
+gate,inputs,gate_instances_over_256_vectors
+NAND2,01,2688
+NAND2,11,2240
+NAND2,10,1792
+NAND2,00,448

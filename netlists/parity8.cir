@@ -1,0 +1,3633 @@
+* 8-bit parity checker (XOR tree, nand XOR cells), 16nm LP nominal corner, all 256 input vectors
+.include "models/16nm_LP.pm"
+.options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9
+.temp 27
+
+.subckt NAND2 a b out vdd
+Mp1 out a vdd vdd pmos L=1.6e-08 W=6.4e-08
+Mp2 out b vdd vdd pmos L=1.6e-08 W=6.4e-08
+Mn1 out a x 0 nmos L=1.6e-08 W=3.2e-08
+Mn2 x b 0 0 nmos L=1.6e-08 W=3.2e-08
+.ends NAND2
+
+VDD vdd 0 DC 0.9
+Vd0 d0 0 DC 0
+Vd1 d1 0 DC 0
+Vd2 d2 0 DC 0
+Vd3 d3 0 DC 0
+Vd4 d4 0 DC 0
+Vd5 d5 0 DC 0
+Vd6 d6 0 DC 0
+Vd7 d7 0 DC 0
+
+Xxa_g1 d0 d1 xa_n1 vdd NAND2
+Xxa_g2 d0 xa_n1 xa_n2 vdd NAND2
+Xxa_g3 d1 xa_n1 xa_n3 vdd NAND2
+Xxa_g4 xa_n2 xa_n3 s01 vdd NAND2
+Xxb_g1 d2 d3 xb_n1 vdd NAND2
+Xxb_g2 d2 xb_n1 xb_n2 vdd NAND2
+Xxb_g3 d3 xb_n1 xb_n3 vdd NAND2
+Xxb_g4 xb_n2 xb_n3 s23 vdd NAND2
+Xxc_g1 d4 d5 xc_n1 vdd NAND2
+Xxc_g2 d4 xc_n1 xc_n2 vdd NAND2
+Xxc_g3 d5 xc_n1 xc_n3 vdd NAND2
+Xxc_g4 xc_n2 xc_n3 s45 vdd NAND2
+Xxd_g1 d6 d7 xd_n1 vdd NAND2
+Xxd_g2 d6 xd_n1 xd_n2 vdd NAND2
+Xxd_g3 d7 xd_n1 xd_n3 vdd NAND2
+Xxd_g4 xd_n2 xd_n3 s67 vdd NAND2
+Xxe_g1 s01 s23 xe_n1 vdd NAND2
+Xxe_g2 s01 xe_n1 xe_n2 vdd NAND2
+Xxe_g3 s23 xe_n1 xe_n3 vdd NAND2
+Xxe_g4 xe_n2 xe_n3 s0123 vdd NAND2
+Xxf_g1 s45 s67 xf_n1 vdd NAND2
+Xxf_g2 s45 xf_n1 xf_n2 vdd NAND2
+Xxf_g3 s67 xf_n1 xf_n3 vdd NAND2
+Xxf_g4 xf_n2 xf_n3 s4567 vdd NAND2
+Xxg_g1 s0123 s4567 xg_n1 vdd NAND2
+Xxg_g2 s0123 xg_n1 xg_n2 vdd NAND2
+Xxg_g3 s4567 xg_n1 xg_n3 vdd NAND2
+Xxg_g4 xg_n2 xg_n3 par vdd NAND2
+
+.control
+set numdgt=10
+op
+echo @@VEC 0
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 1
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 2
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 3
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 4
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 5
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 6
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 7
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 8
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 9
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 10
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 11
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 12
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 13
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 14
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 15
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 16
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 17
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 18
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 19
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 20
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 21
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 22
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 23
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 24
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 25
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 26
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 27
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 28
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 29
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 30
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 31
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 32
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 33
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 34
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 35
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 36
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 37
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 38
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 39
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 40
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 41
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 42
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 43
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 44
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 45
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 46
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 47
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 48
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 49
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 50
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 51
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 52
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 53
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 54
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 55
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 56
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 57
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 58
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 59
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 60
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 61
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 62
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0
+op
+echo @@VEC 63
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 64
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 65
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 66
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 67
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 68
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 69
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 70
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 71
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 72
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 73
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 74
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 75
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 76
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 77
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 78
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 79
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 80
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 81
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 82
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 83
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 84
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 85
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 86
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 87
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 88
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 89
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 90
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 91
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 92
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 93
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 94
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 95
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 96
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 97
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 98
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 99
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 100
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 101
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 102
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 103
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 104
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 105
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 106
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 107
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 108
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 109
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 110
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 111
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 112
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 113
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 114
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 115
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 116
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 117
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 118
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 119
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 120
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 121
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 122
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 123
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 124
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 125
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 126
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0
+op
+echo @@VEC 127
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 128
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 129
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 130
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 131
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 132
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 133
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 134
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 135
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 136
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 137
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 138
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 139
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 140
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 141
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 142
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 143
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 144
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 145
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 146
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 147
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 148
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 149
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 150
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 151
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 152
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 153
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 154
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 155
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 156
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 157
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 158
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 159
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 160
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 161
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 162
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 163
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 164
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 165
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 166
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 167
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 168
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 169
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 170
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 171
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 172
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 173
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 174
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 175
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 176
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 177
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 178
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 179
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 180
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 181
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 182
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 183
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 184
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 185
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 186
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 187
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 188
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 189
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 190
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0
+alter Vd7 dc = 0.9
+op
+echo @@VEC 191
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 192
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 193
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 194
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 195
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 196
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 197
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 198
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 199
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 200
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 201
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 202
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 203
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 204
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 205
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 206
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 207
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 208
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 209
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 210
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 211
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 212
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 213
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 214
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 215
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 216
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 217
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 218
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 219
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 220
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 221
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 222
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 223
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 224
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 225
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 226
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 227
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 228
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 229
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 230
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 231
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 232
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 233
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 234
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 235
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 236
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 237
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 238
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 239
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 240
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 241
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 242
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 243
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 244
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 245
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 246
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 247
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 248
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 249
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 250
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 251
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 252
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 253
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 254
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+alter Vd0 dc = 0.9
+alter Vd1 dc = 0.9
+alter Vd2 dc = 0.9
+alter Vd3 dc = 0.9
+alter Vd4 dc = 0.9
+alter Vd5 dc = 0.9
+alter Vd6 dc = 0.9
+alter Vd7 dc = 0.9
+op
+echo @@VEC 255
+print i(VDD)
+print i(Vd0) i(Vd1) i(Vd2) i(Vd3) i(Vd4) i(Vd5) i(Vd6) i(Vd7)
+print v(xa_n1) v(xa_n2) v(xa_n3) v(s01) v(xb_n1) v(xb_n2) v(xb_n3) v(s23) v(xc_n1) v(xc_n2) v(xc_n3) v(s45) v(xd_n1) v(xd_n2) v(xd_n3) v(s67) v(xe_n1) v(xe_n2) v(xe_n3) v(s0123) v(xf_n1) v(xf_n2) v(xf_n3) v(s4567) v(xg_n1) v(xg_n2) v(xg_n3) v(par)
+destroy all
+quit
+.endc
+
+.end
