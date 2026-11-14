@@ -1,0 +1,27 @@
+* Single-transistor netlist: NMOS ON
+* 16nm LP, nominal model card, VDD = 0.9 V, 27 C
+.include "models/16nm_LP.pm"
+.options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9
+.temp 27
+* every terminal has its own voltage source
+VDS d 0 DC 0.45
+VGS g 0 DC 0.9
+VSS s 0 DC 0
+VBS b 0 DC 0
+M1 d g s b nmos L=1.6e-08 W=3.2e-08
+.control
+op
+* current INTO each terminal (dataset sign convention)
+let Id = -i(VDS)
+let Ig = -i(VGS)
+let Is = -i(VSS)
+let Ib = -i(VBS)
+print Id
+print Ig
+print Is
+print Ib
+let KCL = Id + Ig + Is + Ib
+print KCL
+quit
+.endc
+.end

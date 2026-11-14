@@ -1,6 +1,6 @@
 tech node : 16nm_LP
 VDD : 0.9
-Testing * - bit parity checker
+Test circuit : 8-bit parity checker
 Simulator : ngspice-44.2 (`ngspice_con.exe`)
 
 ## Run order (from the project root)
@@ -12,8 +12,18 @@ python .\src\spice\run_dataset.py                        # simulate -> data/proc
 python .\src\spice\run_dataset.py --suffix _edge         # simulate -> data/processed/{case}_edge.csv
 python .\src\analysis\data_check.py                      # Kirchhoff check + 3 trend plots
 python .\train_models.py                                 # train, compare, select, test, save
+python .\src\spice\generate_rail_dataset.py --workers 8  # 160,000 operating-point samples -> data/processed/rail_samples.csv.gz
+python .\train_rail_models.py --jobs 8                   # operating-point sub-models -> added to saved_models/*.joblib
+python .\src\spice\write_example_netlists.py --check     # deliverable 2: netlists/*.cir
 python .\src\validation\gate_validation.py --corners 200 --ngspice "C:\Ngspice\Spice64\bin\ngspice_con.exe"
+python .\src\validation\circuit_validation.py --corners 200 --ngspice "C:\Ngspice\Spice64\bin\ngspice_con.exe"
 ```
+
+Re-running `train_models.py` rewrites the four model files without the
+operating-point sub-models, so run `train_rail_models.py` again after it.
+On Linux use `--ngspice ngspice` (Python 3.12 and `requirements.txt`; the saved
+models only load with scikit-learn 1.5.1). Part C is documented in
+[README_part_c.md](README_part_c.md).
 
 `run_dataset.py` runs simulations in parallel (`--workers N`), and the output does
 not depend on the worker count. Re-simulating the uniform samples reproduces
@@ -63,6 +73,17 @@ IMPORTANT (should include in the report)
    per case with every parameter drawn as in the spec, except Vd/Vs (40% near 0,
    40% near VDD, 20% uniform). **This deviates from the uniform Vd/Vs spec and should be
    stated in the report.** Set `USE_EDGE_SAMPLES=0` to train without them.
+6. **Operating-point sub-models** (`generate_rail_dataset.py`, `train_rail_models.py`;
+   see "Reaching 99%" below). In static CMOS, a transistor's drain and source sit
+   exactly at a rail, or (in a series stack) one sits at a rail and the other at an
+   internal node. For these 8 configurations (`00 01 10 11` = drain/source at 0/VDD,
+   `m0 m1 0m 1m` = one terminal free), small MLPs trained on 160,000 extra
+   single-transistor SPICE samples at exactly those configurations replace the
+   general prediction. They are kept only where they pass a held-out check, and
+   they live inside the four saved model files (`model.rail_models`).
+7. **Zero-bias gate rule**: `ig = 0` when the gate is within 1 mV of every other
+   terminal. With no field across the oxide there is no tunnelling; the PMOS OFF model
+   predicted ~1e-7 A there at high VDD, where SPICE gives ~0.
 
 ### Model comparison (validation, best frame per family, all terminals pooled)
 
@@ -129,36 +150,49 @@ ML leakage:
    internal nodes, using the OFF devices' predicted currents.
 3. Leakage = |sum of terminal currents at the VDD node|.
 
+Every SPICE run also records the signed supply current and whether ngspice needed
+its "transient op" fallback (`transient_op_fallback`). Those results are not true
+DC solutions (they are not even reproducible across ngspice versions), so they are
+flagged (`spice_flagged`), and accuracy is also reported without them
+(`gate_validation_metrics_unflagged.csv`). 33 of 3,600 cases are flagged, all AND2.
+If ngspice cannot solve a case at all (ngspice-47 fails on AND2 `00` at corner 164, even with
+its fallback), the case is recorded with `solve_failed = True`, listed in the output and left
+out of the metrics, so that gate's row shows 199 corners.
+
 Check: feeding exact single-transistor SPICE currents into this procedure
 reproduces the gate SPICE leakage to within 0.03% for all 18 cases, so the
 remaining error comes from the transistor models alone.
 
 ### Results
 
-| Gate | Inputs | SPICE median (A) | ML median (A) | Bias (A) | Median error (%) | P95 error (%) | Mean accuracy (%) |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| INV | 0 | 1.205e-10 | 1.202e-10 | 1.001e-12 | 3.51 | 8.76 | 95.81 |
-| INV | 1 | 5.115e-12 | 4.949e-12 | -4.574e-14 | 5.34 | 15.79 | 93.53 |
-| NAND2 | 00 | 2.157e-10 | 2.229e-10 | 1.600e-12 | 3.20 | 8.64 | 96.27 |
-| NAND2 | 01 | 1.205e-10 | 1.202e-10 | 9.750e-13 | 3.50 | 8.76 | 95.82 |
-| NAND2 | 10 | 1.125e-10 | 1.139e-10 | 8.764e-13 | 3.31 | 8.55 | 95.94 |
-| NAND2 | 11 | 1.023e-11 | 9.897e-12 | -9.139e-14 | 5.34 | 15.77 | 93.53 |
-| NOR2 | 00 | 2.410e-10 | 2.412e-10 | 1.471e-12 | 2.77 | 7.26 | 96.73 |
-| NOR2 | 01 | 1.501e-10 | 1.561e-10 | 4.878e-13 | 2.78 | 8.52 | 96.51 |
-| NOR2 | 10 | 4.693e-13 | 4.665e-13 | -8.386e-16 | 4.85 | 13.90 | 94.11 |
-| NOR2 | 11 | 3.032e-14 | 2.990e-14 | -3.252e-16 | 2.97 | 23.86 | 93.50 |
-| AND2 | 00 | 4.384e-10 | 4.164e-10 | 5.321e-13 | 3.73 | 19.35 | 93.23 |
-| AND2 | 01 | 3.312e-10 | 3.138e-10 | -3.285e-13 | 3.99 | 16.49 | 93.53 |
-| AND2 | 10 | 3.300e-10 | 3.102e-10 | -6.111e-13 | 4.09 | 22.42 | 92.39 |
-| AND2 | 11 | 1.712e-10 | 1.705e-10 | 5.566e-13 | 2.66 | 8.41 | 96.60 |
-| OR2 | 00 | 4.289e-10 | 4.299e-10 | -1.730e-13 | 3.42 | 12.36 | 95.45 |
-| OR2 | 01 | 2.683e-10 | 2.770e-10 | 1.390e-12 | 2.95 | 8.43 | 96.44 |
-| OR2 | 10 | 1.250e-10 | 1.232e-10 | 1.031e-12 | 3.46 | 8.32 | 96.23 |
-| OR2 | 11 | 1.206e-10 | 1.204e-10 | 1.029e-12 | 3.48 | 8.43 | 96.17 |
+| Gate | Inputs | SPICE median (A) | ML median (A) | Bias (A) | Median error (%) | P95 error (%) | Mean accuracy (%) | Flagged SPICE |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| INV | 0 | 1.205e-10 | 1.208e-10 | -3.501e-14 | 0.28 | 0.99 | 99.62 | 0 |
+| INV | 1 | 5.115e-12 | 5.069e-12 | -1.198e-14 | 1.03 | 3.06 | 98.81 | 0 |
+| NAND2 | 00 | 2.157e-10 | 2.167e-10 | -2.844e-13 | 0.31 | 0.82 | 99.65 | 0 |
+| NAND2 | 01 | 1.205e-10 | 1.208e-10 | -3.474e-14 | 0.28 | 0.99 | 99.62 | 0 |
+| NAND2 | 10 | 1.125e-10 | 1.126e-10 | -1.848e-13 | 0.32 | 0.98 | 99.24 | 0 |
+| NAND2 | 11 | 1.023e-11 | 1.014e-11 | -2.349e-14 | 1.03 | 3.04 | 98.81 | 0 |
+| NOR2 | 00 | 2.410e-10 | 2.417e-10 | -6.941e-14 | 0.28 | 1.00 | 99.62 | 0 |
+| NOR2 | 01 | 1.501e-10 | 1.493e-10 | -1.956e-13 | 0.33 | 0.98 | 99.60 | 0 |
+| NOR2 | 10 | 4.693e-13 | 4.678e-13 | 1.119e-17 | 1.00 | 3.31 | 98.74 | 0 |
+| NOR2 | 11 | 3.032e-14 | 3.002e-14 | -7.276e-17 | 0.50 | 2.27 | 99.24 | 0 |
+| AND2 | 00 | 4.384e-10 | 4.005e-10 | -1.527e-12 | 0.55 | 1.94 | 97.52 | 22 |
+| AND2 | 01 | 3.312e-10 | 3.246e-10 | -9.436e-13 | 0.59 | 1.85 | 98.52 | 2 |
+| AND2 | 10 | 3.300e-10 | 3.215e-10 | -1.242e-12 | 0.67 | 2.14 | 97.39 | 9 |
+| AND2 | 11 | 1.712e-10 | 1.700e-10 | -1.175e-13 | 0.34 | 1.19 | 99.59 | 0 |
+| OR2 | 00 | 4.289e-10 | 4.276e-10 | -1.173e-12 | 0.48 | 1.45 | 99.43 | 0 |
+| OR2 | 01 | 2.683e-10 | 2.672e-10 | -2.190e-13 | 0.30 | 0.83 | 99.66 | 0 |
+| OR2 | 10 | 1.250e-10 | 1.251e-10 | -2.943e-14 | 0.28 | 1.04 | 99.62 | 0 |
+| OR2 | 11 | 1.206e-10 | 1.210e-10 | -3.464e-14 | 0.28 | 0.99 | 99.62 | 0 |
 
-**Overall: 95.10% mean accuracy, 96.49% median; 65.6% of cases within ±5% and 91.7% within ±10%.**
-Best: NOR2 `00`/`01` (2.8% median error). Worst: INV/NAND2 with the NMOS pull-down ON
-(`1`, `11`; 5.3% median), and AND2 `10` (22% P95).
+**Overall: 99.13% mean accuracy (99.36% excluding the 33 flagged SPICE cases), 99.60% median;
+81.8% of cases within ±1%, 99.56% within ±5% and 99.61% within ±10%.**
+Best: INV `0`, NAND2 `00`/`01`, NOR2 `00`, OR2 `10`/`11` (≈0.28% median error).
+Least accurate: INV `1`, NAND2 `11` and NOR2 `10` (≈1.0% median): the leakage there is
+small (5e-12 to 5e-13 A) and set by stack/OFF-device currents. AND2 `00`/`10` have the
+lowest mean accuracy only because of their flagged SPICE references (circled in the
+parity plot). With those excluded, AND2 matches the other gates.
 
 ### Fixes compared with the earlier gate validation
 
@@ -174,12 +208,47 @@ Progression of the mean gate accuracy: original ≈ 0% (median errors up to 5×1
 81.4% (fixed validation + new targets/features/MLP) → 94.9% (+ rail-edge samples) →
 95.1% (MLP trained to convergence, 1e-21 A log floor).
 
-### Remaining gap to 99%
+### Reaching 99%: where the error was and how it was removed
 
-The leakage procedure is exact (0.03% with oracle currents), so the remaining ~5%
-comes from transistor-model error at the gate operating points (≈2–5% median for
-PMOS-ON `ig`, NMOS-OFF `id`/`is` and PMOS-OFF `is`). Options for improving it:
-* More rail-edge training samples, or samples at the exact gate bias points.
-* An ensemble of several MLP seeds, or a separate network per terminal.
-* A larger network trained in PyTorch with a learning-rate schedule (sklearn's
-  L-BFGS run takes ~25 min per fit and has plateaued at this size).
+**Diagnosis.** Each transistor in every Part B gate case was re-simulated *on its own*
+in SPICE at exactly the bias the ML model is given. Feeding those SPICE device currents
+through the same leakage procedure gives **99.75%** (the remaining 0.25% is the 33 flagged
+AND2 references), so the composition is exact and all the error came from the transistor
+models at the in-gate bias points. Making one model output exact at a time showed
+where. The largest gains were PMOS ON `ig` (+1.8 points; pull-up with drain = source = VDD),
+PMOS OFF `is` (+1.3; drain = 0, source = VDD) and NMOS ON `ig` (+0.8; drain = source = 0).
+At these exact-rail points the general models were 3–8% off: the uniform datasets almost
+never sample a drain *and* source sitting exactly on a rail.
+
+**Fix.** `generate_rail_dataset.py` simulates 160,000 extra single-transistor samples at
+those operating points (8 configurations × 4 cases; VDD, T, W and process drawn as in the
+main datasets, own seeds 4041/5051). **No gate or circuit SPICE result is used for
+training.** `train_rail_models.py` fits one MLP per (case, configuration, terminal) on 80%
+of the corners. A sub-model is kept only if, on the held-out 20%, its median error is
+< 10% and its P95 is ≤ 50%. 67 of 77 are kept, most with 0.3–2% held-out median error
+(`results/metrics/rail_submodels_metrics.csv`). ON-device `id`/`is` are not modelled:
+the gate procedure solves them from Kirchhoff's law.
+
+| | Before | After |
+|---|---:|---:|
+| Part B mean accuracy (3,600 cases) | 95.10% | **99.13%** (99.36% unflagged) |
+| Part B median / P95 error | 3.51% / 12.96% | **0.40% / 1.94%** |
+| Part C mean accuracy (51,199 cases, with input loading) | 92.32% | **99.21%** |
+| Part C median / P95 error | 4.16% / 19.86% | **0.63% / 1.91%** |
+
+On the original test set (`results/metrics/rail_submodels_test_effect.csv`) nothing gets
+worse. The uniform samples are unchanged (only 5–10 of the 1,500 per case are within 1 mV of a rail),
+and on the rail-edge samples the median errors drop (e.g. PMOS OFF `is` 6.4% → 2.8%,
+NMOS ON `ig` 3.8% → 1.6%) with equal or lower P95.
+
+**For the report:** the extra dataset deviates from the spec's uniform Vd/Vs sampling in
+the same way as the rail-edge samples, so state it. All four models remain one model per case.
+
+### Remaining limitations
+
+* 33 AND2 SPICE references needed ngspice's transient-op fallback and are unreliable.
+  Nodesets and higher iteration limits did not fix them.
+* Devices with *both* drain and source at internal nodes (`mm`) still use the general
+  models. They do not occur in these gates, but would in deeper stacks.
+* The general models' P95 on the uniform test set is unchanged (e.g. NMOS ON `ig` 75%).
+  Those errors sit at bias points that do not occur inside the gates.

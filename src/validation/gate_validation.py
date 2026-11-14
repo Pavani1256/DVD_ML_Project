@@ -240,18 +240,33 @@ def run_spice(job: dict, ngspice: str) -> dict:
         capture_output=True, text=True, timeout=900, check=False,
     )
     output = completed.stdout + "\n" + completed.stderr
-    if completed.returncode != 0:
-        raise RuntimeError(f"ngspice failed for {name}:\n{output}")
     row = {"gate": gate, "inputs": input_bits, "corner": index}
+    values = {}
     for node in GATES[gate]["nodes"]:
         match = re.search(rf"(?im)v\({re.escape(node)}\)\s*=\s*([-+0-9.eE]+)", output)
-        if not match:
-            raise RuntimeError(f"Missing SPICE voltage v({node}) for {name}:\n{output}")
-        row[f"spice_{node}_V"] = float(match.group(1))
+        values[node] = float(match.group(1)) if match else None
     current = re.search(r"(?im)i\(vdd\)\s*=\s*([-+0-9.eE]+)", output)
-    if not current:
-        raise RuntimeError(f"Missing SPICE VDD current for {name}:\n{output}")
+    if completed.returncode != 0 or current is None or None in values.values():
+        # ngspice could not find any operating point (seen with ngspice-47 for
+        # one AND2 case where even the transient-op fallback fails). Record the
+        # case as failed; it is excluded from the metrics instead of stopping
+        # the whole run. The netlist is kept for inspection.
+        print(f"WARNING: ngspice could not solve {name}; recorded as failed and "
+              f"excluded from the metrics (netlist kept: {netlist_path})", flush=True)
+        row.update({f"spice_{node}_V": np.nan for node in GATES[gate]["nodes"]})
+        row.update({"spice_leakage": np.nan, "spice_ivdd_signed": np.nan,
+                    "transient_op_fallback": True, "solve_failed": True})
+        return row
+    for node, value in values.items():
+        row[f"spice_{node}_V"] = value
     row["spice_leakage"] = abs(float(current.group(1)))
+    row["solve_failed"] = False
+    # ngspice reports a delivering supply as a negative current; a positive
+    # value is not a physical DC solution. "Transient op" is ngspice's last
+    # resort when gmin and source stepping both fail, and its result need not
+    # be a true DC point (it is not even reproducible across ngspice versions).
+    row["spice_ivdd_signed"] = float(current.group(1))
+    row["transient_op_fallback"] = "transient op started" in output.lower()
     return row
 
 
@@ -420,6 +435,7 @@ def metrics(results: pd.DataFrame) -> pd.DataFrame:
             "median_error_percent": np.median(error),
             "p95_error_percent": np.percentile(error, 95),
             "mean_accuracy_percent": np.clip(100 - error, 0, 100).mean(),
+            "spice_flagged_corners": int(group["spice_flagged"].sum()),
         })
     return pd.DataFrame(rows)
 
@@ -430,6 +446,11 @@ def parity_plot(raw: pd.DataFrame) -> None:
         ax.scatter(group["spice_leakage"], group["ml_leakage"], alpha=0.35, s=10, label=gate)
     lo = max(min(raw["spice_leakage"].min(), raw["ml_leakage"].min()), 1e-18)
     hi = max(raw["spice_leakage"].max(), raw["ml_leakage"].max())
+    flagged = raw[raw["spice_flagged"]]
+    if len(flagged):
+        ax.scatter(flagged["spice_leakage"], flagged["ml_leakage"], s=40,
+                   facecolors="none", edgecolors="k", linewidths=0.8,
+                   label=f"SPICE transient-op fallback ({len(flagged)})")
     ax.loglog([lo, hi], [lo, hi], "r--", label="Ideal")
     ax.set_xlabel("SPICE leakage (A)")
     ax.set_ylabel("ML leakage (A)")
@@ -477,9 +498,24 @@ def main() -> None:
         if spice["corner"].max() + 1 != args.corners:
             raise ValueError("Cached SPICE results have a different corner count")
         spice = spice.drop(columns=["seed", "wn", "wp"])
+        if "transient_op_fallback" not in spice:
+            print("WARNING: SPICE cache predates the convergence flags; re-run without "
+                  "--reuse-spice to detect transient-op fallbacks.")
+            spice["transient_op_fallback"] = False
+            spice["spice_ivdd_signed"] = -spice["spice_leakage"]
     else:
         spice = simulate_all(corners, widths, args.ngspice, args.workers)
         spice.assign(seed=CORNER_SEED, wn=args.wn, wp=args.wp).to_csv(SPICE_CACHE, index=False)
+    if "solve_failed" not in spice:
+        spice["solve_failed"] = False
+    spice["solve_failed"] = spice["solve_failed"].astype(bool)
+    spice["transient_op_fallback"] = spice["transient_op_fallback"].astype(bool)
+    failed = spice[spice["solve_failed"]]
+    if len(failed):
+        print(f"WARNING: {len(failed)} gate case(s) could not be solved by ngspice and are "
+              "excluded from all metrics:\n"
+              + failed[["gate", "inputs", "corner"]].to_string(index=False))
+        spice = spice[~spice["solve_failed"]].reset_index(drop=True)
 
     corner_table = pd.DataFrame([{
         "corner": i, "vdd": c["vdd"], "temp": c["temp"],
@@ -495,25 +531,33 @@ def main() -> None:
     raw = spice.copy()
     raw["ml_leakage"] = ml_leakage(spice, corners, widths, packages)
     raw["error_percent"] = relative_error_percent(raw["spice_leakage"], raw["ml_leakage"])
+    raw["spice_flagged"] = raw["transient_op_fallback"] | (raw["spice_ivdd_signed"] > 0)
     raw = raw.merge(corner_table[["corner", "vdd", "temp", "n_vth0", "p_vth0"]], on="corner")
     raw.to_csv(RESULT_DIR / "gate_validation_raw.csv", index=False)
 
     summary = metrics(raw)
     summary.to_csv(RESULT_DIR / "gate_validation_metrics.csv", index=False)
+    clean = raw[~raw["spice_flagged"]]
+    metrics(clean).to_csv(RESULT_DIR / "gate_validation_metrics_unflagged.csv", index=False)
     parity_plot(raw)
 
     pd.set_option("display.width", 200)
     print(summary.to_string(index=False))
 
-    error = raw["error_percent"]
-    accuracy = np.clip(100 - error, 0, 100)
-    print("\nAGGREGATE ACCURACY")
-    print(f"Mean accuracy (100 - error, clipped at 0%): {accuracy.mean():.2f}%")
-    print(f"Median accuracy: {np.median(accuracy):.2f}%")
-    print(f"Predictions within +/-1%:  {(error <= 1).mean() * 100:.2f}%")
-    print(f"Predictions within +/-5%:  {(error <= 5).mean() * 100:.2f}%")
-    print(f"Predictions within +/-10%: {(error <= 10).mean() * 100:.2f}%")
-
+    flagged = raw[raw["spice_flagged"]]
+    print(f"\nSPICE convergence: {len(flagged)} of {len(raw)} gate cases used ngspice's "
+          f"transient-op fallback or have a supply absorbing current (flagged)")
+    if len(flagged):
+        print(flagged.groupby(["gate", "inputs"]).size().to_string())
+    for label, subset in (("ALL CASES", raw), ("EXCLUDING FLAGGED SPICE CASES", clean)):
+        error = subset["error_percent"]
+        accuracy = np.clip(100 - error, 0, 100)
+        print(f"\nAGGREGATE ACCURACY, {label} ({len(subset)} cases)")
+        print(f"Mean accuracy (100 - error, clipped at 0%): {accuracy.mean():.2f}%")
+        print(f"Median accuracy: {np.median(accuracy):.2f}%")
+        print(f"Predictions within +/-1%:  {(error <= 1).mean() * 100:.2f}%")
+        print(f"Predictions within +/-5%:  {(error <= 5).mean() * 100:.2f}%")
+        print(f"Predictions within +/-10%: {(error <= 10).mean() * 100:.2f}%")
 
 if __name__ == "__main__":
     main()

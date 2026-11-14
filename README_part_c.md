@@ -47,19 +47,26 @@ Vector labels are written `d7…d0` (e.g. `00000101` means d0 = d2 = 1).
    re-simulation of the identical Part B NAND2 netlists that also records the input-source currents).
    The error of this check against the full netlist is the composition error alone.
 
-## Results (51,200 cases = 256 vectors × 200 corners)
+## Results (51,199 cases = 256 vectors × 200 corners)
+
+SPICE: the team's ngspice-47 run (one point, corner 147 vector `00100111`, could not be solved
+by ngspice-47 and is excluded). Models: the four saved models with the operating-point
+sub-models and the zero-bias gate rule (see `ReadME.md`, "Reaching 99%").
 
 | Prediction | SPICE median (A) | Pred. median (A) | Bias (A) | Median err (%) | P95 err (%) | Mean acc. (%) | Within ±10 % |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| **ML, gate leakage + input loading** | 6.884e-09 | 6.728e-09 | -1.72e-11 | **4.16** | 19.86 | **92.32** | 83.1 % |
-| ML, plain sum of gate leakages (spec wording) | 6.884e-09 | 3.154e-09 | -2.83e-09 | 54.21 | 88.46 | 47.38 | 2.4 % |
-| SPICE gates + input loading (composition check) | 6.884e-09 | 6.885e-09 | 6.2e-13 | 0.009 | 0.040 | 99.97 | 99.98 % |
+| **ML, gate leakage + input loading** | 6.884e-09 | 6.860e-09 | -2.49e-11 | **0.63** | 1.91 | **99.21** | 99.99 % |
+| ML, plain sum of gate leakages (spec wording) | 6.884e-09 | 3.114e-09 | -2.81e-09 | 54.44 | 88.68 | 47.22 | 2.0 % |
+| SPICE gates + input loading (composition check) | 6.884e-09 | 6.885e-09 | 6.2e-13 | 0.009 | 0.040 | 99.97 | 99.99 % |
 | SPICE gates, plain sum (composition check) | 6.884e-09 | 3.124e-09 | -2.82e-09 | 54.29 | 88.67 | 47.33 | 1.9 % |
-| ML vs composed SPICE gates (gate-model error only) | — | — | — | 4.14 | 19.80 | 92.34 | 83.1 % |
+| ML vs composed SPICE gates (gate-model error only) | — | — | — | 0.64 | 1.91 | 99.21 | 100 % |
+
+Excluding the 11 flagged SPICE points, every case is within ±10 % (worst 8.7 %) and 99.96 % are
+within ±5 %.
 
 The per-vector table (all 256 vectors, the same columns as the gate results table) is
 `circuit_metrics_per_vector_with_loading.csv` (and `_plain_sum.csv`). The error is almost
-independent of the vector: the per-vector median error is 4.05–4.30 % for every vector
+independent of the vector: the per-vector median error is 0.60–0.66 % for every vector
 (`circuit_metrics_by_ones.csv`). Plots: `circuit_validation_parity.png` and `circuit_error_analysis.png`.
 
 ### Main findings for the report
@@ -71,29 +78,33 @@ independent of the vector: the per-vector median error is 4.05–4.30 % for ever
   so it is not part of the gate's |I(VDD)|. The plain sum therefore misses about 54 % of the circuit leakage
   even with *exact SPICE* gate values. Adding the input-pin currents makes the SPICE composition
   exact (0.009 % median), and all of the remaining ML error is gate-model error.
-* **Accuracy vs gate level**: 4.16 % median error at circuit level vs 2.7–5.3 % for the NAND2 cases at
-  gate level. The mean accuracy of 92.3 % (Part B: 95.1 %) is pulled down by the issue below.
-* **Largest errors: 4 corners (15, 45, 140, 146), 1,024 cases, up to 4.7×10^4 % error.** All
-  four have high VDD (0.95–0.98 V). The `pmos_off` model predicts `ig ≈ 2–5×10^-7 A`
-  for the NAND2 `10` pull-up PMOS p1, which has all four terminals at VDD (single-transistor SPICE gives
-  ≈ 0). This is a Part A model defect that Part B could not see, because it doesn't enter the gate's
-  |I(VDD)|. Without these 4 corners, the mean accuracy is 94.2 % and the P95 error is 16.7 %.
-* The other 196 per-corner medians fall between 0.07 % and 51 %, with no trend vs temperature, VDD or
-  NMOS/PMOS vth0 (|correlation| ≤ 0.15). The worst four (195, 122, 91, 22; 28–51 %) don't share one
-  condition. Corners 22 and 195 (low VDD, below −25 °C) are also the weak corners in Part B.
-* **SPICE solve quality**: all 51,200 points have every net at the correct logic level (worst
-  0.22 mV from a rail), and no point has the supply absorbing current. 51,119 converged directly, 69 needed gmin
-  stepping, and **12 needed the transient-op fallback** (flagged in `spice_flagged`). 8 of those 12
-  are 70–94 % off the composed-SPICE value, so treat them as unreliable references. Excluding them
-  changes the headline numbers by < 0.02 %.
+* **Accuracy vs gate level**: 0.63 % median error and 99.21 % mean accuracy at circuit level vs
+  0.28–1.03 % median for the NAND2 cases and 99.13 % overall at gate level. Composing 28 gates
+  averages out part of the per-gate error, so the circuit is as accurate as the gates.
+* **Progression** (same SPICE data): plain sum 47.4 % → with input loading 92.3 % → + zero-bias
+  gate rule 94.5 % → + operating-point sub-models **99.2 %**.
+* **Zero-bias gate rule (in `src/transistor_ml.py`)**: without it, 4 corners (15, 45, 140, 146;
+  1,024 cases, all at VDD 0.95–0.98 V) had errors up to 4.7×10^4 %. The `pmos_off` model
+  predicted `ig ≈ 2–5×10^-7 A` for the NAND2 `10` pull-up PMOS p1, which has all four terminals at VDD,
+  where single-transistor SPICE gives ≈ 0. Part B could not see this, because that current does not
+  enter a gate's |I(VDD)|. The rule sets `ig = 0` whenever the gate is within 1 mV of every other
+  terminal: there is no field across the oxide, so there is no tunnelling. Effect on Part C:
+  mean accuracy 92.3 → 94.5 %, P95 19.9 → 13.6 %, max error 4.7×10^4 → 94 %. Part B is unchanged.
+* Per-corner median errors fall between 0.004 % and 3.4 % (before the sub-models: up to 51 % at
+  cold corners), with only weak trends vs temperature (r = 0.22) and VDD (r = −0.25). The worst
+  corners are 93 (58 °C, 3.4 %), 50 (85 °C, 2.9 %), 37, 104 and 63 (2.2–2.8 %). Four of these
+  five have low VDD (0.82–0.85 V), where the leakage is smallest.
+* **SPICE solve quality (ngspice-47)**: all 51,199 solved points have every net at the correct logic
+  level (worst 0.22 mV from a rail), and no point has the supply absorbing current. 51,119 converged
+  directly, 69 needed gmin stepping, and **11 needed the transient-op fallback** (flagged in
+  `spice_flagged`). Most of those are 70–94 % off the composed-SPICE value, so treat them as
+  unreliable references. Excluding them changes the headline numbers by < 0.02 %.
 
 ## Environment notes
 
-* Simulated here with **ngspice-42** (the team used 44.2). Re-simulating 108 Part B gate cases with
-  ngspice-42 reproduced the cached 44.2 results to within 4.5e-6 (relative). Re-run on the team machine for the final report.
-* The saved models load only with **scikit-learn 1.5.1** (the version they were pickled with).
-  `requirements.txt` pins 1.9.1, which fails with `No module named '_loss'`. The gate models used here
-  reproduce the Part B ML leakages to within 5e-10 %.
+* The circuit SPICE results are from the team's ngspice-47 run. ngspice-42 gave the same headline
+  numbers to within 0.01 %, and reproduced the cached 44.2 Part B results to within 4.5e-6.
+* The saved models load only with **scikit-learn 1.5.1** (Python 3.12; see `requirements.txt`).
 
 ## Files (`results/circuit_validation/`)
 

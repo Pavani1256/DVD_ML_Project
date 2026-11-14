@@ -433,8 +433,14 @@ def read_part_b_spice(corners, widths, gate_types) -> pd.DataFrame:
     if spice["corner"].max() + 1 != len(corners):
         raise ValueError("Part B SPICE cache has a different corner count; "
                          "re-run gate_validation.py with the same --corners")
-    spice = spice[spice["gate"].isin(gate_types)].drop(columns=["seed", "wn", "wp"])
-    return spice.reset_index(drop=True)
+    spice = spice[spice["gate"].isin(gate_types)]
+    if "solve_failed" in spice and spice["solve_failed"].astype(bool).any():
+        bad = spice[spice["solve_failed"].astype(bool)][["gate", "inputs", "corner"]]
+        raise ValueError("Part B has unsolved SPICE cases for gates used in the circuit; "
+                         "their gate models cannot be built:\n" + bad.to_string(index=False))
+    keep = ["gate", "inputs", "corner", "spice_leakage"] + [
+        c for c in spice.columns if c.startswith("spice_") and c.endswith("_V")]
+    return spice[keep].reset_index(drop=True)
 
 
 def simulate_gate_pin_currents(corners, widths, gate_types, ngspice, workers) -> pd.DataFrame:
@@ -650,7 +656,7 @@ def parity_plot(raw: pd.DataFrame, title: str) -> None:
     ax.set_ylabel("ML hierarchical leakage (A)")
     ax.set_title(title)
     ax.grid(True, which="both", alpha=0.25)
-    ax.legend(loc="lower right", markerscale=3, frameon=False, fontsize=8.5)
+    ax.legend(loc="upper left", markerscale=3, frameon=False, fontsize=8.5)
     fig.tight_layout()
     fig.savefig(RESULT_DIR / "circuit_validation_parity.png", dpi=300)
     plt.close(fig)
