@@ -43,5 +43,7 @@ desktop.ini
 # Regenerate with generate_*_samples.py -> run_dataset.py -> train_models.py.
 data/samples/*.csv
 data/processed/*.csv
+data/processed/*.csv.gz
+data/spice_work/
 data/training_cache/
 saved_models/*.joblib

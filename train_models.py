@@ -7,7 +7,7 @@ Run from the project root after src/spice/run_dataset.py:
 Method (see src/transistor_ml.py for details):
   * 70/15/15 train/validation/test split with a fixed seed.
   * Canonical source/drain orientation + physics features.
-  * Targets are log10(|I| + 1e-30) per terminal; terminal signs come from a
+  * Targets are log10(|I| + 1e-21) per terminal; terminal signs come from a
     constant or a sign classifier fitted on the training set.
   * Four model families (Random Forest, Extra Trees, Histogram Gradient
     Boosting, MLP), each with a small hyperparameter grid.

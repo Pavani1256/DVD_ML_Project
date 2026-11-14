@@ -1,0 +1,26 @@
+* AND2 gate netlist (static CMOS), inputs 10, nominal corner (VDD = 0.9 V, 27 C), Wn = 2*Lmin, Wp = 4*Lmin
+* Same netlist as the Part B validation; leakage = |i(VDD)|.
+* AND2 10
+.include "models/16nm_LP.pm"
+.options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9
+.temp 27
+VDD vdd 0 DC 0.9
+VA a 0 DC 0.9
+VB b 0 DC 0
+Mp1 z a vdd vdd pmos L=1.6e-08 W=6.4e-08
+Mp2 z b vdd vdd pmos L=1.6e-08 W=6.4e-08
+Mn1 z a x 0 nmos L=1.6e-08 W=3.2e-08
+Mn2 x b 0 0 nmos L=1.6e-08 W=3.2e-08
+Mp3 out z vdd vdd pmos L=1.6e-08 W=6.4e-08
+Mn3 out z 0 0 nmos L=1.6e-08 W=3.2e-08
+.nodeset v(x)=0.45
+.nodeset v(z)=0.45
+.nodeset v(out)=0.45
+.control
+op
+print v(x) v(z) v(out)
+print i(VDD)
+quit
+.endc
+
+.end

@@ -13,12 +13,25 @@ Prediction pipeline for one transistor case (e.g. NMOS OFF):
    threshold (body effect, temperature, DIBL), log10 of an EKV channel-current
    estimate, oxide-field proxies, log10(W), 1/T, plus the raw vd, vs and the
    swap flag (the model card is not perfectly drain/source symmetric).
-3. Targets. Every terminal current is regressed as log10(|I| + 1e-30), in
+3. Targets. Every terminal current is regressed as log10(|I| + 1e-21), in
    either the raw or the canonical terminal frame (both are tried). The sign
    of each terminal is constant if the training data agrees on it, otherwise
    predicted by a classifier.
 4. Per-terminal selection. Each terminal uses whichever (frame, regressor)
    had the lowest validation P95 error for that terminal.
+5. Operating-point sub-models (optional, added by train_rail_models.py).
+   In static CMOS every transistor terminal sits exactly at a rail (0 or
+   VDD) or, for series-stack devices, one terminal sits at a rail and the
+   other at an internal node. The uniform datasets almost never sample those
+   exact points, and there the general regressors are 3-8 % off. For a
+   device whose drain and source are both within RAIL_TOLERANCE of a rail
+   ("exact-rail" config, e.g. "01" = drain at 0, source at VDD), or whose
+   drain or source is (the other being free, "m"), a small MLP trained on
+   single-transistor SPICE samples at exactly that configuration replaces
+   the general prediction for the terminals it was kept for. The models
+   live in ``TransistorModel.rail_models`` {(config, terminal): (model, sign)}.
+6. Zero-bias gate rule. ig is set to 0 when the gate is within 1 mV of every
+   other terminal (no oxide field, so no tunnelling current).
 """
 
 from __future__ import annotations
@@ -44,7 +57,52 @@ SIGN_CONSTANT_THRESHOLD = 1e-3
 BOLTZMANN_OVER_Q = 8.617333262e-5  # V/K
 
 _VD, _VS = FEATURES.index("vd"), FEATURES.index("vs")
+_VG, _VB = FEATURES.index("vg"), FEATURES.index("vb")
 _ID, _IS = TARGETS.index("id"), TARGETS.index("is")
+_IG = TARGETS.index("ig")
+
+# Gate-oxide tunnelling needs a voltage across the oxide. When the gate is
+# within this many volts of every other terminal, the true gate current is
+# zero (SPICE returns ~1e-16 A rounding noise), and the regressors are not
+# reliable there: the PMOS OFF model predicted ~1e-7 A with all four
+# terminals at VDD at high VDD. Such predictions are set to exactly 0.
+ZERO_BIAS_GATE_TOLERANCE = 1e-3
+
+# Operating-point sub-models (step 5 above).
+# A drain/source within this many volts of 0 or VDD counts as "at the rail".
+RAIL_TOLERANCE = 1e-3
+RAIL_CONFIGS_EXACT = ("00", "01", "10", "11")     # (drain, source): 0 = 0 V, 1 = VDD
+RAIL_CONFIGS_ONE = ("m0", "m1", "0m", "1m")       # m = free (internal node)
+_RAIL_BASE = ["vdd", "temp", "w", "vth0", "toxe", "ndep", "u0", "xj"]
+
+
+def rail_config(X) -> np.ndarray:
+    """Operating-point configuration of every row: '00'..'11', 'm0'.., or 'mm'."""
+    X = np.asarray(X, dtype=float)
+    vdd = X[:, FEATURES.index("vdd")]
+    levels = []
+    for column in (_VD, _VS):
+        v = X[:, column]
+        levels.append(np.where(np.abs(v) < RAIL_TOLERANCE, "0",
+                               np.where(np.abs(v - vdd) < RAIL_TOLERANCE, "1", "m")))
+    return np.char.add(levels[0].astype(str), levels[1].astype(str))
+
+
+def rail_features(X, config: str) -> np.ndarray:
+    """Inputs of a sub-model: VDD, T, log W, process parameters (toxe in nm,
+    log10 ndep) and, for one-rail configs, the free node voltage as a
+    fraction of VDD plus its log distance to each rail."""
+    X = np.asarray(X, dtype=float)
+    Z = X[:, [FEATURES.index(c) for c in _RAIL_BASE]].copy()
+    Z[:, 2] = np.log(Z[:, 2])
+    Z[:, 4] = Z[:, 4] * 1e9
+    Z[:, 5] = np.log10(Z[:, 5])
+    if "m" in config:
+        free = X[:, _VD if config[0] == "m" else _VS] / X[:, FEATURES.index("vdd")]
+        Z = np.column_stack([Z, free,
+                             np.log10(np.clip(free, 1e-7, None)),
+                             np.log10(np.clip(1.0 - free, 1e-7, None))])
+    return Z
 
 
 def device_of(case: str) -> str:
@@ -358,6 +416,23 @@ class TransistorModel:
             if name not in outputs:
                 outputs[name] = self.predict_candidate(name, F, mask)
             Y[:, t] = outputs[name][:, t]
+        X = np.asarray(X, dtype=float)
+        rail_models = getattr(self, "rail_models", None)
+        if rail_models:
+            configs = rail_config(X)
+            for config in np.unique(configs):
+                rows = configs == config
+                Z = None
+                for t, terminal in enumerate(TARGETS):
+                    entry = rail_models.get((str(config), terminal))
+                    if entry is None:
+                        continue
+                    if Z is None:
+                        Z = rail_features(X[rows], str(config))
+                    model, sign = entry
+                    Y[rows, t] = sign * 10.0 ** model.predict(Z)
+        gate_drop = np.max(np.abs(X[:, [_VD, _VS, _VB]] - X[:, [_VG]]), axis=1)
+        Y[gate_drop < ZERO_BIAS_GATE_TOLERANCE, _IG] = 0.0
         return Y
 
 

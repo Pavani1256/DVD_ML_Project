@@ -1,0 +1,19 @@
+* INV gate netlist (static CMOS), inputs 1, nominal corner (VDD = 0.9 V, 27 C), Wn = 2*Lmin, Wp = 4*Lmin
+* Same netlist as the Part B validation; leakage = |i(VDD)|.
+* INV 1
+.include "models/16nm_LP.pm"
+.options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9
+.temp 27
+VDD vdd 0 DC 0.9
+VA a 0 DC 0.9
+Mp1 out a vdd vdd pmos L=1.6e-08 W=6.4e-08
+Mn1 out a 0 0 nmos L=1.6e-08 W=3.2e-08
+.nodeset v(out)=0.45
+.control
+op
+print v(out)
+print i(VDD)
+quit
+.endc
+
+.end
