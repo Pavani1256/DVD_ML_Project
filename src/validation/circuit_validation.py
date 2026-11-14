@@ -263,9 +263,11 @@ def run_vector(gates, corner, widths, index, k, model_path, ngspice) -> dict:
     Attempts, in order, stopping at the first that converges without the
     transient-op fallback (whose result need not be a true DC point):
       1. logic-level nodesets
-      2. no nodesets
-      3. no nodesets, higher DC iteration limits (itl1/itl6)
-      4. nodesets, higher DC iteration limits
+      2. nodesets, KLU matrix solver (.options klu)
+      3. no nodesets
+      4. no nodesets, KLU
+      5. no nodesets, higher DC iteration limits (itl1/itl6)
+      6. nodesets, higher DC iteration limits
     The attempt that converged by the most direct path is kept. If every
     attempt fails (seen once with ngspice-47), the point is recorded with
     solve_path = "failed" and NaN results, and left out of the metrics,
@@ -276,9 +278,17 @@ def run_vector(gates, corner, widths, index, k, model_path, ngspice) -> dict:
                            f"8-bit parity checker, corner {index}, vector {vector_label(k)}")
     plain = re.sub(r"(?m)^\.nodeset.*\n", "", netlist)
     more_iterations = ".options itl1=1000 itl6=1000\n.options gmin"
+    # `.options klu` only swaps ngspice's matrix solver (SPARSE -> KLU); the
+    # netlist and the required .options are unchanged. It solves most points
+    # where the default solver falls back to transient op (checked against the
+    # composed SPICE gates to within 0.014 %), including the one point that
+    # ngspice-47 could not solve at all.
+    klu = ".options klu\n.options gmin"
     attempts = {
         "nodeset": netlist,
+        "nodeset_klu": netlist.replace(".options gmin", klu, 1),
         "no_nodeset": plain,
+        "no_nodeset_klu": plain.replace(".options gmin", klu, 1),
         "no_nodeset_itl": plain.replace(".options gmin", more_iterations, 1),
         "nodeset_itl": netlist.replace(".options gmin", more_iterations, 1),
     }

@@ -47,10 +47,9 @@ Vector labels are written `d7…d0` (e.g. `00000101` means d0 = d2 = 1).
    re-simulation of the identical Part B NAND2 netlists that also records the input-source currents).
    The error of this check against the full netlist is the composition error alone.
 
-## Results (51,199 cases = 256 vectors × 200 corners)
+## Results (51,200 cases = 256 vectors × 200 corners)
 
-SPICE: the team's ngspice-47 run (one point, corner 147 vector `00100111`, could not be solved
-by ngspice-47 and is excluded). Models: the four saved models with the operating-point
+SPICE: the team's ngspice-47 run. Models: the four saved models with the operating-point
 sub-models and the zero-bias gate rule (see `ReadME.md`, "Reaching 99%").
 
 | Prediction | SPICE median (A) | Pred. median (A) | Bias (A) | Median err (%) | P95 err (%) | Mean acc. (%) | Within ±10 % |
@@ -61,7 +60,7 @@ sub-models and the zero-bias gate rule (see `ReadME.md`, "Reaching 99%").
 | SPICE gates, plain sum (composition check) | 6.884e-09 | 3.124e-09 | -2.82e-09 | 54.29 | 88.67 | 47.33 | 1.9 % |
 | ML vs composed SPICE gates (gate-model error only) | — | — | — | 0.64 | 1.91 | 99.21 | 100 % |
 
-Excluding the 11 flagged SPICE points, every case is within ±10 % (worst 8.7 %) and 99.96 % are
+Excluding the flagged SPICE points, every case is within ±10 % (worst 8.7 %) and 99.96 % are
 within ±5 %.
 
 The per-vector table (all 256 vectors, the same columns as the gate results table) is
@@ -94,11 +93,14 @@ independent of the vector: the per-vector median error is 0.60–0.66 % for ever
   cold corners), with only weak trends vs temperature (r = 0.22) and VDD (r = −0.25). The worst
   corners are 93 (58 °C, 3.4 %), 50 (85 °C, 2.9 %), 37, 104 and 63 (2.2–2.8 %). Four of these
   five have low VDD (0.82–0.85 V), where the leakage is smallest.
-* **SPICE solve quality (ngspice-47)**: all 51,199 solved points have every net at the correct logic
-  level (worst 0.22 mV from a rail), and no point has the supply absorbing current. 51,119 converged
-  directly, 69 needed gmin stepping, and **11 needed the transient-op fallback** (flagged in
-  `spice_flagged`). Most of those are 70–94 % off the composed-SPICE value, so treat them as
-  unreliable references. Excluding them changes the headline numbers by < 0.02 %.
+* **SPICE solve quality**: every operating point is retried with `.options klu` (only the matrix
+  solver changes; netlist and required `.options` are unchanged) if the default solver falls back
+  to "transient op" or fails. With ngspice-47 the default solver needed the fallback for 11 points
+  (seven of them 250–1,500 % off) and could not solve one at all (corner 147, vector `00100111`).
+  KLU solves 10 of the 11 and the unsolvable one, within 0.014 % of the composed SPICE gates.
+  So all 51,200 points are solved and every net is at the correct logic level; only the remaining
+  fallback points (2 in a check run) are flagged in `spice_flagged`. The column `solve_attempt`
+  records which attempt was used.
 
 ## Environment notes
 

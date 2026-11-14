@@ -223,50 +223,74 @@ def make_netlist(gate: str, input_bits: str, corner: dict, widths: dict) -> str:
     return "\n".join(lines)
 
 
-def run_spice(job: dict, ngspice: str) -> dict:
-    gate, input_bits, index = job["gate"], job["inputs"], job["corner"]
-    name = f"{gate.lower()}_{input_bits}_{index}"
-    WORK_DIR.mkdir(parents=True, exist_ok=True)
-    model_path = WORK_DIR / f"{name}.pm"
-    netlist_path = WORK_DIR / f"{name}.cir"
-    model_path.write_text(job["model_text"], encoding="utf-8")
-    netlist_path.write_text(
-        job["netlist"].replace("{MODEL}", model_path.resolve().as_posix()),
-        encoding="utf-8",
-    )
+def _simulate(netlist: str, netlist_path: Path, ngspice: str, gate: str):
+    """Run one netlist. Returns (node voltages, signed I(VDD), fallback used),
+    or None if ngspice produced no operating point at all."""
+    netlist_path.write_text(netlist, encoding="utf-8")
     completed = subprocess.run(
         [ngspice, "-b", str(netlist_path)],
         # A few corners need ngspice's slower transient-op fallback.
         capture_output=True, text=True, timeout=900, check=False,
     )
     output = completed.stdout + "\n" + completed.stderr
-    row = {"gate": gate, "inputs": input_bits, "corner": index}
     values = {}
     for node in GATES[gate]["nodes"]:
         match = re.search(rf"(?im)v\({re.escape(node)}\)\s*=\s*([-+0-9.eE]+)", output)
         values[node] = float(match.group(1)) if match else None
     current = re.search(r"(?im)i\(vdd\)\s*=\s*([-+0-9.eE]+)", output)
     if completed.returncode != 0 or current is None or None in values.values():
-        # ngspice could not find any operating point (seen with ngspice-47 for
-        # one AND2 case where even the transient-op fallback fails). Record the
-        # case as failed; it is excluded from the metrics instead of stopping
-        # the whole run. The netlist is kept for inspection.
+        return None
+    return values, float(current.group(1)), "transient op started" in output.lower()
+
+
+def run_spice(job: dict, ngspice: str) -> dict:
+    """Simulate one gate case.
+
+    ngspice's default linear solver (SPARSE) fails to find the DC point of a
+    few AND2 cases; it then falls back to a "transient op" whose result need
+    not be a true DC solution (it is not even reproducible across ngspice
+    versions), or fails outright. Those cases are re-run with `.options klu`,
+    which only changes the matrix solver: the netlist and the required
+    .options are unchanged. The KLU result is kept if it converges without the
+    fallback; this was checked against an independent reference (stand-alone
+    NAND2 + INV + INV input current at the same corner) to within 0.01 %.
+    """
+    gate, input_bits, index = job["gate"], job["inputs"], job["corner"]
+    name = f"{gate.lower()}_{input_bits}_{index}"
+    WORK_DIR.mkdir(parents=True, exist_ok=True)
+    model_path = WORK_DIR / f"{name}.pm"
+    netlist_path = WORK_DIR / f"{name}.cir"
+    model_path.write_text(job["model_text"], encoding="utf-8")
+    netlist = job["netlist"].replace("{MODEL}", model_path.resolve().as_posix())
+
+    result, solver = _simulate(netlist, netlist_path, ngspice, gate), "default"
+    if result is None or result[2]:
+        klu = _simulate(netlist.replace(".options gmin", ".options klu\n.options gmin", 1),
+                        netlist_path, ngspice, gate)
+        if klu is not None and (not klu[2] or result is None):
+            result, solver = klu, "klu"
+
+    row = {"gate": gate, "inputs": input_bits, "corner": index}
+    if result is None:
+        # No operating point with either solver: record the case as failed;
+        # it is excluded from the metrics instead of stopping the whole run.
         print(f"WARNING: ngspice could not solve {name}; recorded as failed and "
               f"excluded from the metrics (netlist kept: {netlist_path})", flush=True)
         row.update({f"spice_{node}_V": np.nan for node in GATES[gate]["nodes"]})
         row.update({"spice_leakage": np.nan, "spice_ivdd_signed": np.nan,
-                    "transient_op_fallback": True, "solve_failed": True})
+                    "transient_op_fallback": True, "solve_failed": True,
+                    "linear_solver": "none"})
         return row
+    values, ivdd, fallback = result
     for node, value in values.items():
         row[f"spice_{node}_V"] = value
-    row["spice_leakage"] = abs(float(current.group(1)))
-    row["solve_failed"] = False
+    row["spice_leakage"] = abs(ivdd)
     # ngspice reports a delivering supply as a negative current; a positive
-    # value is not a physical DC solution. "Transient op" is ngspice's last
-    # resort when gmin and source stepping both fail, and its result need not
-    # be a true DC point (it is not even reproducible across ngspice versions).
-    row["spice_ivdd_signed"] = float(current.group(1))
-    row["transient_op_fallback"] = "transient op started" in output.lower()
+    # value is not a physical DC solution.
+    row["spice_ivdd_signed"] = ivdd
+    row["transient_op_fallback"] = fallback
+    row["solve_failed"] = False
+    row["linear_solver"] = solver
     return row
 
 
@@ -510,6 +534,11 @@ def main() -> None:
         spice["solve_failed"] = False
     spice["solve_failed"] = spice["solve_failed"].astype(bool)
     spice["transient_op_fallback"] = spice["transient_op_fallback"].astype(bool)
+    if "linear_solver" in spice:
+        recovered = spice[(spice["linear_solver"] == "klu") & ~spice["transient_op_fallback"]]
+        if len(recovered):
+            print(f"{len(recovered)} gate case(s) needed the KLU retry and converged properly "
+                  "(default solver had failed or fallen back to transient op)")
     failed = spice[spice["solve_failed"]]
     if len(failed):
         print(f"WARNING: {len(failed)} gate case(s) could not be solved by ngspice and are "

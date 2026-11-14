@@ -150,14 +150,17 @@ ML leakage:
    internal nodes, using the OFF devices' predicted currents.
 3. Leakage = |sum of terminal currents at the VDD node|.
 
-Every SPICE run also records the signed supply current and whether ngspice needed
-its "transient op" fallback (`transient_op_fallback`). Those results are not true
-DC solutions (they are not even reproducible across ngspice versions), so they are
-flagged (`spice_flagged`), and accuracy is also reported without them
-(`gate_validation_metrics_unflagged.csv`). 33 of 3,600 cases are flagged, all AND2.
-If ngspice cannot solve a case at all (ngspice-47 fails on AND2 `00` at corner 164, even with
-its fallback), the case is recorded with `solve_failed = True`, listed in the output and left
-out of the metrics, so that gate's row shows 199 corners.
+**SPICE solve quality.** With ngspice's default matrix solver (SPARSE), 33 AND2 cases do not
+converge and fall back to a "transient op", whose result is not a true DC solution. Some
+are hundreds of percent off, they are not reproducible across ngspice versions, and with
+ngspice-47 one case fails completely. Those cases are re-run with `.options klu`, which
+only swaps the matrix solver: the netlist, the four required `.options`, the corners and
+the complete-gate AND2 are unchanged. KLU solves 20 of the 33 properly. Each result was
+checked against an independent reference (the stand-alone NAND2 + INV + INV input current
+at the same corner) and agrees within 0.01 %. The column `linear_solver` records which
+solver was used. The other 13 still need the fallback; they are flagged (`spice_flagged`),
+and accuracy is also reported without them (`gate_validation_metrics_unflagged.csv`). A case
+that no solver can solve would be recorded with `solve_failed = True` and left out.
 
 Check: feeding exact single-transistor SPICE currents into this procedure
 reproduces the gate SPICE leakage to within 0.03% for all 18 cases, so the
@@ -177,22 +180,24 @@ remaining error comes from the transistor models alone.
 | NOR2 | 01 | 1.501e-10 | 1.493e-10 | -1.956e-13 | 0.33 | 0.98 | 99.60 | 0 |
 | NOR2 | 10 | 4.693e-13 | 4.678e-13 | 1.119e-17 | 1.00 | 3.31 | 98.74 | 0 |
 | NOR2 | 11 | 3.032e-14 | 3.002e-14 | -7.276e-17 | 0.50 | 2.27 | 99.24 | 0 |
-| AND2 | 00 | 4.384e-10 | 4.005e-10 | -1.527e-12 | 0.55 | 1.94 | 97.52 | 22 |
-| AND2 | 01 | 3.312e-10 | 3.246e-10 | -9.436e-13 | 0.59 | 1.85 | 98.52 | 2 |
-| AND2 | 10 | 3.300e-10 | 3.215e-10 | -1.242e-12 | 0.67 | 2.14 | 97.39 | 9 |
+| AND2 | 00 | 4.127e-10 | 4.005e-10 | -1.413e-12 | 0.55 | 1.84 | 98.69 | 11 |
+| AND2 | 01 | 3.248e-10 | 3.246e-10 | -9.107e-13 | 0.58 | 1.81 | 99.28 | 0 |
+| AND2 | 10 | 3.249e-10 | 3.215e-10 | -1.198e-12 | 0.66 | 2.00 | 98.55 | 2 |
 | AND2 | 11 | 1.712e-10 | 1.700e-10 | -1.175e-13 | 0.34 | 1.19 | 99.59 | 0 |
 | OR2 | 00 | 4.289e-10 | 4.276e-10 | -1.173e-12 | 0.48 | 1.45 | 99.43 | 0 |
 | OR2 | 01 | 2.683e-10 | 2.672e-10 | -2.190e-13 | 0.30 | 0.83 | 99.66 | 0 |
 | OR2 | 10 | 1.250e-10 | 1.251e-10 | -2.943e-14 | 0.28 | 1.04 | 99.62 | 0 |
 | OR2 | 11 | 1.206e-10 | 1.210e-10 | -3.464e-14 | 0.28 | 0.99 | 99.62 | 0 |
 
-**Overall: 99.13% mean accuracy (99.36% excluding the 33 flagged SPICE cases), 99.60% median;
-81.8% of cases within ±1%, 99.56% within ±5% and 99.61% within ±10%.**
+**Overall: 99.30% mean accuracy (99.36% excluding the 13 flagged SPICE cases), 99.60% median;
+82.0% of cases within ±1%, 99.78% within ±5% and 99.83% within ±10%.**
 Best: INV `0`, NAND2 `00`/`01`, NOR2 `00`, OR2 `10`/`11` (≈0.28% median error).
 Least accurate: INV `1`, NAND2 `11` and NOR2 `10` (≈1.0% median): the leakage there is
 small (5e-12 to 5e-13 A) and set by stack/OFF-device currents. AND2 `00`/`10` have the
-lowest mean accuracy only because of their flagged SPICE references (circled in the
-parity plot). With those excluded, AND2 matches the other gates.
+lowest mean accuracy only because of their 13 flagged SPICE references (circled in the
+parity plot). With those excluded, AND2 matches the other gates. On the 20 cases that KLU
+recovered, the ML error was up to 95 % against the old fallback references and is at most 3.2 %
+against the proper ones: the old references were wrong, not the ML.
 
 ### Fixes compared with the earlier gate validation
 
@@ -212,8 +217,8 @@ Progression of the mean gate accuracy: original ≈ 0% (median errors up to 5×1
 
 **Diagnosis.** Each transistor in every Part B gate case was re-simulated *on its own*
 in SPICE at exactly the bias the ML model is given. Feeding those SPICE device currents
-through the same leakage procedure gives **99.75%** (the remaining 0.25% is the 33 flagged
-AND2 references), so the composition is exact and all the error came from the transistor
+through the same leakage procedure gives **99.75%** (the remaining 0.25% came from the AND2
+references that needed ngspice's fallback, see "SPICE solve quality"), so the composition is exact and all the error came from the transistor
 models at the in-gate bias points. Making one model output exact at a time showed
 where. The largest gains were PMOS ON `ig` (+1.8 points; pull-up with drain = source = VDD),
 PMOS OFF `is` (+1.3; drain = 0, source = VDD) and NMOS ON `ig` (+0.8; drain = source = 0).
@@ -231,7 +236,7 @@ the gate procedure solves them from Kirchhoff's law.
 
 | | Before | After |
 |---|---:|---:|
-| Part B mean accuracy (3,600 cases) | 95.10% | **99.13%** (99.36% unflagged) |
+| Part B mean accuracy (3,600 cases) | 95.10% | **99.30%** (99.36% unflagged) |
 | Part B median / P95 error | 3.51% / 12.96% | **0.40% / 1.94%** |
 | Part C mean accuracy (51,199 cases, with input loading) | 92.32% | **99.21%** |
 | Part C median / P95 error | 4.16% / 19.86% | **0.63% / 1.91%** |
@@ -246,8 +251,8 @@ the same way as the rail-edge samples, so state it. All four models remain one m
 
 ### Remaining limitations
 
-* 33 AND2 SPICE references needed ngspice's transient-op fallback and are unreliable.
-  Nodesets and higher iteration limits did not fix them.
+* 13 AND2 SPICE references still need ngspice's transient-op fallback even with KLU, and are
+  flagged. Nodesets and higher iteration limits did not fix them either.
 * Devices with *both* drain and source at internal nodes (`mm`) still use the general
   models. They do not occur in these gates, but would in deeper stacks.
 * The general models' P95 on the uniform test set is unchanged (e.g. NMOS ON `ig` 75%).
