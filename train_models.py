@@ -94,6 +94,13 @@ RAIL_DATASETS = {
     case: ROOT / "data" / "processed" / f"{case}_rail.csv" for case in DATASETS
 }
 USE_RAIL_SAMPLES = os.environ.get("USE_RAIL_SAMPLES", "1") != "0"
+# Supplementary stack samples (src/data_generation/generate_stack_samples.py):
+# one terminal on a rail, the other at an internal stack-node voltage.
+# Set USE_STACK_SAMPLES=0 in the environment to leave them out.
+STACK_DATASETS = {
+    case: ROOT / "data" / "processed" / f"{case}_stack.csv" for case in DATASETS
+}
+USE_STACK_SAMPLES = os.environ.get("USE_STACK_SAMPLES", "1") != "0"
 
 MODEL_DIR = ROOT / "saved_models"
 METRIC_DIR = ROOT / "results" / "metrics"
@@ -318,6 +325,8 @@ def load_case_data(case):
         sources["edge"] = load_split(EDGE_DATASETS[case])
     if USE_RAIL_SAMPLES and RAIL_DATASETS[case].exists():
         sources["rail"] = load_split(RAIL_DATASETS[case])
+    if USE_STACK_SAMPLES and STACK_DATASETS[case].exists():
+        sources["stack"] = load_split(STACK_DATASETS[case])
 
     names = ("X_train", "Y_train", "X_val", "Y_val", "X_test", "Y_test")
     data = {

@@ -1,7 +1,8 @@
 tech node : 16nm_LP
 VDD : 0.9
-Testing : 8-bit parity checker (Part C: see [README_part_c.md](README_part_c.md); 99.19% mean accuracy)
-Simulator : ngspice-44.2 (`ngspice_con.exe`) on Windows; any `ngspice` on `PATH` on Linux
+Testing : 8-bit parity checker (Part C: see [README_part_c.md](README_part_c.md); 99.35% mean accuracy)
+Simulator : ngspice-46 for the gate/circuit SPICE references in `results/` (transistor datasets: 44.2 and 46);
+`ngspice_con.exe` on Windows, any `ngspice` on `PATH` on Linux
 
 ## Run order (from the project root)
 
@@ -13,9 +14,11 @@ scripts below (all sampling uses fixed seeds).
 python .\src\data_generation\generate_samples.py         # 4 x 10,000 uniform input samples (seed 2026)
 python .\src\data_generation\generate_edge_samples.py    # 4 x 6,000 supplementary rail-edge samples (seed 2028)
 python .\src\data_generation\generate_rail_samples.py    # 4 x 10,000 supplementary rail-corner samples (seed 2029)
+python .\src\data_generation\generate_stack_samples.py   # 4 x 10,000 supplementary stack-node samples (seed 2030)
 python .\src\spice\run_dataset.py                        # simulate -> data/processed/{case}.csv
 python .\src\spice\run_dataset.py --suffix _edge         # simulate -> data/processed/{case}_edge.csv
 python .\src\spice\run_dataset.py --suffix _rail         # simulate -> data/processed/{case}_rail.csv
+python .\src\spice\run_dataset.py --suffix _stack        # simulate -> data/processed/{case}_stack.csv
 python .\src\analysis\data_check.py                      # Kirchhoff check + 3 trend plots
 python .\train_models.py                                   # train, compare, select, test, save (~2 h on 8 cores)
 python .\src\validation\gate_validation.py --corners 200 --reuse-spice
@@ -32,7 +35,7 @@ python .\src\validation\circuit_validation.py --reuse-spice
   * `TRAIN_CASES=pmos_off,nmos_on` retrains only those cases.
   * `REUSE_FITS=1` re-runs only selection/testing, from the fit cache in `data/training_cache/`.
   * `MLP_SEEDS=3` averages several MLP seeds.
-  * `USE_EDGE_SAMPLES=0` and `USE_RAIL_SAMPLES=0` train without the supplementary sets.
+  * `USE_EDGE_SAMPLES=0`, `USE_RAIL_SAMPLES=0` and `USE_STACK_SAMPLES=0` train without the supplementary sets.
 
 ## Models we are trying out
 
@@ -43,7 +46,7 @@ Gradient Boosting	 Can model nonlinear relationships accurately
 MLP Neural Network	 Can learn smooth nonlinear functions
 
 Data Split Used : 70+15+15, seed 42 (train_models.py contains splitting, training and selection).
-The uniform, edge and rail datasets are each split separately and then combined,
+The uniform, edge, rail and stack datasets are each split separately and then combined,
 so the uniform split matches the original one.
 
 IMPORTANT (should include in the report)
@@ -51,7 +54,7 @@ IMPORTANT (should include in the report)
   1e-18 A is the SPICE `abstol`, below which currents are not resolved.
 * Test-set results are reported only after model selection on validation data.
 * Accuracy = `100 - error`, clipped at 0, averaged over all 3,600 gate cases.
-* The edge and rail datasets deviate from the uniform Vd/Vs specification (see 5 below).
+* The edge, rail and stack datasets deviate from the uniform Vd/Vs specification (see 5 below).
 
 ## Modelling method (shared code in `src/transistor_ml.py`)
 
@@ -81,11 +84,15 @@ IMPORTANT (should include in the report)
      (`p95_resolved_error_percent`), falling back to plain P95.
 5. **Supplementary samples near the rails.** Inside a gate, every transistor has Vd and
    Vs at (or within microvolts of) 0 or VDD, and uniform sampling almost never visits
-   those points. Two extra sets draw every parameter as in the spec, except Vd and Vs:
+   those points; transistors in a series stack also have one terminal on an internal
+   node. Three extra sets draw every parameter as in the spec, except Vd and Vs:
    * `generate_edge_samples.py`, 6,000 per case: Vd/Vs exactly at 0 or VDD (25% each),
      within 1e-9 to 1e-2·VDD of a rail (15% each side), or uniform (10%).
    * `generate_rail_samples.py`, 10,000 per case: each of Vd/Vs exactly on a rail (45%),
      within 1e-9 to 1e-3·VDD of a rail (35%), or uniform (20%).
+   * `generate_stack_samples.py`, 10,000 per case: one of Vd/Vs on a rail (70% exactly,
+     30% within 1e-9 to 1e-3·VDD), the other 0.1%–50% of VDD away from a rail
+     (log-uniform), like the internal node of a NAND2/NOR2 stack.
 
    No gate-level SPICE results are used to build training data.
    **This deviates from the uniform Vd/Vs spec and should be stated in the report.**
@@ -94,46 +101,46 @@ IMPORTANT (should include in the report)
 
 | Case | Model | Frame | R2 | Median error (%) | P95 error (%) |
 |---|---|---|---:|---:|---:|
-| nmos_on | RandomForest | raw | 0.9711 | 9.94 | 62.76 |
-| nmos_on | ExtraTrees | raw | 0.9791 | 8.36 | 53.87 |
-| nmos_on | GradientBoosting | raw | 0.9822 | 5.19 | 39.32 |
-| nmos_on | MLP | raw | 0.9997 | 1.13 | 11.05 |
-| nmos_off | RandomForest | raw | 0.9351 | 1.94 | 51.37 |
-| nmos_off | ExtraTrees | raw | 0.9475 | 1.50 | 44.28 |
-| nmos_off | GradientBoosting | raw | 0.9932 | 1.06 | 29.43 |
-| nmos_off | MLP | raw | 0.9987 | 0.63 | 14.61 |
-| pmos_on | RandomForest | raw | 0.9644 | 10.54 | 59.76 |
-| pmos_on | ExtraTrees | raw | 0.9739 | 8.90 | 51.69 |
-| pmos_on | GradientBoosting | raw | 0.9922 | 4.71 | 34.90 |
-| pmos_on | MLP | raw | 0.9997 | 1.25 | 10.66 |
-| pmos_off | RandomForest | canonical | 0.8986 | 8.72 | 99.86 |
-| pmos_off | ExtraTrees | raw | 0.9169 | 7.81 | 99.23 |
-| pmos_off | GradientBoosting | canonical | 0.9524 | 6.26 | 97.32 |
-| pmos_off | MLP | raw | 0.9988 | 1.07 | 188.38 |
+| nmos_on | RandomForest | raw | 0.9708 | 9.21 | 58.82 |
+| nmos_on | ExtraTrees | raw | 0.9782 | 7.68 | 53.06 |
+| nmos_on | GradientBoosting | raw | 0.9869 | 4.70 | 36.94 |
+| nmos_on | MLP | canonical | 0.9998 | 1.11 | 9.99 |
+| nmos_off | RandomForest | raw | 0.9282 | 2.22 | 49.53 |
+| nmos_off | ExtraTrees | raw | 0.9369 | 1.62 | 41.07 |
+| nmos_off | GradientBoosting | raw | 0.9956 | 1.14 | 25.71 |
+| nmos_off | MLP | raw | 0.9996 | 0.58 | 13.36 |
+| pmos_on | RandomForest | canonical | 0.9683 | 9.76 | 57.14 |
+| pmos_on | ExtraTrees | canonical | 0.9770 | 8.14 | 48.81 |
+| pmos_on | GradientBoosting | canonical | 0.9957 | 3.91 | 30.35 |
+| pmos_on | MLP | canonical | 0.9997 | 1.18 | 10.25 |
+| pmos_off | RandomForest | canonical | 0.9015 | 8.82 | 99.41 |
+| pmos_off | ExtraTrees | canonical | 0.9207 | 7.41 | 97.20 |
+| pmos_off | GradientBoosting | canonical | 0.9604 | 5.90 | 93.93 |
+| pmos_off | MLP | raw | 0.9991 | 1.06 | 168.35 |
 
 PMOS OFF MLP: the pooled P95 is dominated by currents that SPICE reports as ~0 A.
-Over resolved currents (>= 1e-16 A) its P95 is 7.7%, against 45–64% for the tree models.
+Over resolved currents (>= 1e-16 A) its P95 is 7.6%, against 43–62% for the tree models.
 
 ### Chosen models (test set, uniform samples only)
 
 | Case | Current | Selected | Median error (%) | P95 error (%) |
 |---|---|---|---:|---:|
-| nmos_on | id | raw MLP | 1.76 | 9.38 |
-| nmos_on | ig | raw MLP | 1.50 | 55.26 |
-| nmos_on | is | raw MLP | 2.03 | 10.48 |
-| nmos_on | ib | raw MLP | 0.72 | 3.53 |
-| nmos_off | id | canonical MLP | 0.86 | 6.85 |
-| nmos_off | ig | raw MLP | 0.01 | 0.31 |
-| nmos_off | is | raw MLP | 2.12 | 22.04 |
-| nmos_off | ib | raw MLP | 1.26 | 5.30 |
-| pmos_on | id | canonical MLP | 2.71 | 22.15 |
-| pmos_on | ig | raw MLP | 1.00 | 5.28 |
-| pmos_on | is | raw MLP | 2.44 | 28.81 |
-| pmos_on | ib | raw MLP | 0.86 | 3.85 |
-| pmos_off | id | canonical MLP | 0.84 | 5.26 |
-| pmos_off | ig | raw MLP | 0.86 | 3.59 |
-| pmos_off | is | raw MLP | 1.05 | 6.58 |
-| pmos_off | ib | raw MLP | 1.08 | 6.95 |
+| nmos_on | id | canonical MLP | 2.23 | 10.66 |
+| nmos_on | ig | raw MLP | 1.46 | 45.50 |
+| nmos_on | is | raw MLP | 1.85 | 9.87 |
+| nmos_on | ib | raw MLP | 0.72 | 3.56 |
+| nmos_off | id | raw MLP | 0.38 | 5.83 |
+| nmos_off | ig | raw MLP | 0.01 | 0.28 |
+| nmos_off | is | raw MLP | 2.18 | 23.07 |
+| nmos_off | ib | raw MLP | 1.12 | 4.25 |
+| pmos_on | id | canonical MLP | 3.12 | 20.71 |
+| pmos_on | ig | raw MLP | 1.13 | 6.76 |
+| pmos_on | is | raw MLP | 3.22 | 28.49 |
+| pmos_on | ib | raw MLP | 0.83 | 3.55 |
+| pmos_off | id | raw MLP | 0.84 | 5.19 |
+| pmos_off | ig | raw MLP | 0.99 | 3.82 |
+| pmos_off | is | raw MLP | 1.06 | 7.55 |
+| pmos_off | ib | raw MLP | 1.11 | 6.93 |
 
 Full tables: `results/metrics/` (`model_comparison.csv`,
 `model_comparison_detailed.csv`, `final_test_metrics_per_current.csv`).
@@ -158,6 +165,16 @@ ML leakage:
    internal nodes, using the OFF devices' predicted currents.
 3. Leakage = |sum of terminal currents at the VDD node|.
 
+SPICE solve: each gate is solved with `.op`. When Newton, gmin stepping and source
+stepping all fail (or take over 2 min), ngspice falls back to a short "transient op" that
+can stop before the floating internal nodes settle, giving a wrong reference (e.g. AND2 `00`,
+corner 148: 3.74e-9 A instead of 1.92e-10 A). Such points are re-solved with a 2 ms transient
+(gear, from the `.op` state), and the final point is accepted only if it has stopped moving
+(< 1e-4 relative change over the last 10%). The method per point is in the `solve_path`
+column of `gate_spice_raw.csv`: with ngspice-46, 3,553 direct, 11 gmin, 36 long transient.
+Compared with the previous (ngspice-44.2) cache, only the 11 points that had used the
+transient-op fallback change by more than 0.1% (they were 2–19x too high).
+
 Check: feeding exact single-transistor SPICE currents into this procedure
 reproduces the gate SPICE leakage with a 0.0008% median error, so the
 remaining error comes from the transistor models alone.
@@ -166,26 +183,26 @@ remaining error comes from the transistor models alone.
 
 | Gate | Inputs | SPICE median (A) | ML median (A) | Median error (%) | P95 error (%) | Mean accuracy (%) |
 |---|---:|---:|---:|---:|---:|---:|
-| INV | 0 | 1.205e-10 | 1.217e-10 | 0.80 | 2.08 | 98.90 |
-| INV | 1 | 5.115e-12 | 5.130e-12 | 0.61 | 2.40 | 99.15 |
-| NAND2 | 00 | 2.157e-10 | 2.159e-10 | 0.77 | 1.99 | 99.12 |
-| NAND2 | 01 | 1.205e-10 | 1.217e-10 | 0.80 | 2.08 | 98.90 |
-| NAND2 | 10 | 1.125e-10 | 1.109e-10 | 0.75 | 2.01 | 99.12 |
-| NAND2 | 11 | 1.023e-11 | 1.026e-11 | 0.62 | 2.40 | 99.15 |
-| NOR2 | 00 | 2.410e-10 | 2.433e-10 | 0.78 | 2.12 | 99.08 |
-| NOR2 | 01 | 1.501e-10 | 1.504e-10 | 0.64 | 1.87 | 99.22 |
-| NOR2 | 10 | 4.693e-13 | 4.753e-13 | 0.96 | 3.45 | 98.71 |
-| NOR2 | 11 | 3.032e-14 | 2.992e-14 | 2.30 | 13.12 | 96.64 |
-| AND2 | 00 | 4.384e-10 | 4.077e-10 | 0.62 | 1.81 | 97.62 |
-| AND2 | 01 | 3.312e-10 | 3.264e-10 | 0.58 | 2.06 | 98.63 |
-| AND2 | 10 | 3.300e-10 | 3.215e-10 | 0.61 | 2.12 | 97.69 |
-| AND2 | 11 | 1.712e-10 | 1.721e-10 | 0.63 | 1.84 | 99.24 |
-| OR2 | 00 | 4.289e-10 | 4.318e-10 | 0.63 | 1.77 | 99.26 |
-| OR2 | 01 | 2.683e-10 | 2.738e-10 | 0.74 | 1.92 | 99.17 |
-| OR2 | 10 | 1.250e-10 | 1.260e-10 | 0.78 | 1.96 | 99.12 |
-| OR2 | 11 | 1.206e-10 | 1.218e-10 | 0.80 | 2.05 | 99.09 |
+| INV | 0 | 1.205e-10 | 1.207e-10 | 0.70 | 2.15 | 98.88 |
+| INV | 1 | 5.115e-12 | 5.171e-12 | 0.65 | 2.27 | 99.15 |
+| NAND2 | 00 | 2.157e-10 | 2.183e-10 | 0.73 | 2.22 | 99.10 |
+| NAND2 | 01 | 1.205e-10 | 1.207e-10 | 0.72 | 2.15 | 98.87 |
+| NAND2 | 10 | 1.125e-10 | 1.114e-10 | 0.70 | 2.20 | 99.11 |
+| NAND2 | 11 | 1.023e-11 | 1.034e-11 | 0.66 | 2.24 | 99.15 |
+| NOR2 | 00 | 2.410e-10 | 2.414e-10 | 0.69 | 2.15 | 99.15 |
+| NOR2 | 01 | 1.501e-10 | 1.492e-10 | 0.65 | 1.85 | 99.22 |
+| NOR2 | 10 | 4.693e-13 | 4.627e-13 | 1.00 | 2.90 | 98.86 |
+| NOR2 | 11 | 3.032e-14 | 3.010e-14 | 1.25 | 4.82 | 98.35 |
+| AND2 | 00 | 4.025e-10 | 4.019e-10 | 0.51 | 1.70 | 99.35 |
+| AND2 | 01 | 3.248e-10 | 3.270e-10 | 0.48 | 1.51 | 99.39 |
+| AND2 | 10 | 3.234e-10 | 3.254e-10 | 0.49 | 1.51 | 99.39 |
+| AND2 | 11 | 1.712e-10 | 1.721e-10 | 0.60 | 1.72 | 99.27 |
+| OR2 | 00 | 4.289e-10 | 4.281e-10 | 0.49 | 1.65 | 99.37 |
+| OR2 | 01 | 2.683e-10 | 2.707e-10 | 0.67 | 1.91 | 99.19 |
+| OR2 | 10 | 1.250e-10 | 1.254e-10 | 0.67 | 1.99 | 99.16 |
+| OR2 | 11 | 1.206e-10 | 1.209e-10 | 0.70 | 2.05 | 99.13 |
 
-**Overall: 98.77% mean accuracy, 99.25% median. 62.2% of cases are within ±1%, 98.6% within ±5% and 99.3% within ±10%.**
+**Overall: 99.12% mean accuracy, 99.35% median. 67.9% of cases are within ±1%, 99.7% within ±5% and 99.9% within ±10%.**
 
 ### Fixes compared with the earlier gate validation
 
@@ -206,7 +223,9 @@ Progression of the mean gate accuracy:
 | + rail-edge samples | 94.9% |
 | MLP trained to convergence, 1e-21 A log floor | 95.1% |
 | Per-terminal MLPs + tunnelling features + rail-corner samples | 98.56% |
-| + unresolved-current handling | **98.77%** |
+| + unresolved-current handling | 98.77% |
+| SPICE references re-solved (unsettled transient-op points fixed, ngspice-46) | 98.98% |
+| + stack-node training samples | **99.12%** |
 
 ### What limits the accuracy
 
@@ -219,15 +238,9 @@ shows which device currents set the gate leakage:
 * NMOS ON `ig`: AND2 and OR2.
 * NMOS OFF currents barely matter for this card.
 
-### Remaining gap to 99%
+### Remaining error
 
-* **Unconverged SPICE references.** About 11 AND2 cases in `gate_spice_raw.csv` are not
-  converged operating points: Newton, gmin and source stepping fail, and ngspice's
-  transient-op fallback stops before the circuit settles. Example: AND2 `00`, corner 148.
-  * The cache has 3.74e-9 A. The same circuit with 0 V ammeters, or a long transient,
-    gives 1.92e-10 A, which matches the per-transistor reconstruction.
-  * These points alone cost about 0.25 percentage points (AND2 `00`/`10`).
-* **NOR2 `11`** (96.6%): PMOS OFF `ib`/`is` with the drain at the internal node
-  (≈ 0.9·VDD) still has 3–8% error. More stacked-device samples should help.
-* **PMOS ON `ig`** (about 0.8% median error at gate biases) caps most gates near 99.1–99.2%.
-  A seed ensemble (`MLP_SEEDS=3`) may lower it.
+* **NOR2 `11`** (98.3%) and **NOR2 `10`** (98.9%): the stacked PMOS OFF devices (drain or
+  source at the internal node y ≈ 0.9·VDD) are still the least accurate operating points.
+* **PMOS ON `ig`** (about 0.7% median error at gate biases) sets the error of most other
+  gates (99.1–99.4%). A seed ensemble (`MLP_SEEDS=3`) may lower it.
