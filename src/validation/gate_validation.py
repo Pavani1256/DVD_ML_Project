@@ -227,11 +227,16 @@ def _simulate(netlist: str, netlist_path: Path, ngspice: str, gate: str):
     """Run one netlist. Returns (node voltages, signed I(VDD), fallback used),
     or None if ngspice produced no operating point at all."""
     netlist_path.write_text(netlist, encoding="utf-8")
-    completed = subprocess.run(
-        [ngspice, "-b", str(netlist_path)],
-        # A few corners need ngspice's slower transient-op fallback.
-        capture_output=True, text=True, timeout=900, check=False,
-    )
+    try:
+        completed = subprocess.run(
+            [ngspice, "-b", str(netlist_path)],
+            # A normal case takes < 1 s and the transient-op fallback up to
+            # about a minute; the default solver can occasionally hang instead
+            # (seen at a fresh corner). A hang counts as a failed attempt.
+            capture_output=True, text=True, timeout=300, check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return None
     output = completed.stdout + "\n" + completed.stderr
     values = {}
     for node in GATES[gate]["nodes"]:
