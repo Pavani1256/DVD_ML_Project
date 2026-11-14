@@ -48,7 +48,9 @@ against the cached circuit SPICE results without re-simulating.
 from __future__ import annotations
 
 import argparse
+import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -257,6 +259,63 @@ def _solve_path(output: str) -> str:
     return "direct"
 
 
+# A DC attempt that takes longer than this is abandoned (the next attempt,
+# or the long-transient fallback, follows). Normal points solve in seconds.
+OP_ATTEMPT_TIMEOUT_S = 120
+TRAN_STOP = "2m"
+TRAN_SETTLE_TOL = 1e-4
+
+
+def long_transient(netlist: str, gates, k: int, vdd: float, path: Path,
+                   ngspice: str) -> str | None:
+    """Settle the circuit with a long transient when every DC attempt fails.
+
+    ngspice's transient-op fallback runs a very short transient and can stop
+    before the floating stack nodes settle, so its "operating point" can be
+    far from the DC solution (Part B: AND2 00, corner 148 gave 3.7e-9 A
+    instead of the settled 1.92e-10 A). The final point of a 2 ms transient
+    from the logic-level state is the DC operating point once it has stopped
+    moving, which is checked. Gear integration with reltol=1e-4 avoids the
+    tiny-time-step stalls seen with reltol=1e-6. Returns ngspice output in the
+    same "name = value" form as the .op run, or None if it did not settle.
+    """
+    expected, _ = logic_simulate(gates, vector_bits(k))
+    nets = [g[3] for g in gates]
+    lines = [line for line in netlist.splitlines() if not line.startswith(".nodeset")]
+    control = lines.index(".control")
+    probes = ["i(VDD)"] + [f"i(V{d})" for d in INPUTS] + [f"v({n})" for n in nets]
+    lines[control:] = [
+        ".ic " + " ".join(f"v({n})={expected[n] * vdd:.12g}" for n in nets),
+        ".options method=gear reltol=1e-4",
+        ".control",
+        "set numdgt=10",
+        f"tran 10n {TRAN_STOP} 0 1u uic",
+        "let L = length(time) - 1",
+        "let P = floor(length(time) * 0.9)",
+        "echo @@VEC " + str(k),
+        *[f"print {p}[L]" for p in probes],
+        "print i(VDD)[P]",
+        "quit", ".endc", "", ".end", "",
+    ]
+    path.write_text("\n".join(lines), encoding="utf-8")
+    try:
+        completed = subprocess.run([ngspice, "-b", str(path)], capture_output=True,
+                                   text=True, timeout=900, check=False)
+    except subprocess.TimeoutExpired:
+        return None
+    output = completed.stdout + "\n" + completed.stderr
+    if completed.returncode != 0:
+        return None
+    try:
+        final = abs(parse_value(output, "i(vdd)[l]"))
+        earlier = abs(parse_value(output, "i(vdd)[p]"))
+    except RuntimeError:
+        return None
+    if abs(final - earlier) > TRAN_SETTLE_TOL * max(final, 1e-18):
+        return None
+    return re.sub(r"(?im)^(\s*\S+)\[l\](\s*=)", r"\1\2", output)
+
+
 def run_vector(gates, corner, widths, index, k, model_path, ngspice) -> dict:
     """Simulate one input vector at one corner (its own ngspice session).
 
@@ -266,7 +325,9 @@ def run_vector(gates, corner, widths, index, k, model_path, ngspice) -> dict:
       2. no nodesets
       3. no nodesets, higher DC iteration limits (itl1/itl6)
       4. nodesets, higher DC iteration limits
-    The attempt that converged by the most direct path is kept. If every
+    The attempt that converged by the most direct path is kept. If none
+    avoids the transient-op fallback, the circuit is settled with a long
+    transient instead (see long_transient). If every
     attempt fails (seen once with ngspice-47), the point is recorded with
     solve_path = "failed" and NaN results, and left out of the metrics,
     instead of stopping the whole run.
@@ -288,7 +349,7 @@ def run_vector(gates, corner, widths, index, k, model_path, ngspice) -> dict:
         try:
             completed = subprocess.run(
                 [ngspice, "-b", str(netlist_path)],
-                capture_output=True, text=True, timeout=900, check=False,
+                capture_output=True, text=True, timeout=OP_ATTEMPT_TIMEOUT_S, check=False,
             )
             output = completed.stdout + "\n" + completed.stderr
             path = "failed" if completed.returncode != 0 else _solve_path(output)
@@ -305,6 +366,10 @@ def run_vector(gates, corner, widths, index, k, model_path, ngspice) -> dict:
         if path in ("direct", "gmin", "source"):
             break
     attempt, path, output = best
+    if path in ("transient_op", "failed"):
+        settled = long_transient(netlist, gates, k, corner["vdd"], netlist_path, ngspice)
+        if settled is not None:
+            attempt, path, output = "long_tran", f"{path}->long_tran", settled
     if path == "failed":
         print(f"WARNING: ngspice could not solve corner {index} vector {vector_label(k)} "
               f"with any attempt; recorded as failed and excluded from the metrics "
@@ -697,7 +762,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--corners", type=int, default=200)
-    parser.add_argument("--ngspice", default="ngspice_con.exe")
+    parser.add_argument("--ngspice", default=os.environ.get("NGSPICE") or shutil.which("ngspice")
+                        or shutil.which("ngspice_con.exe") or "ngspice_con.exe")
     parser.add_argument("--wn", type=float, default=gv.DEFAULT_WN, help="NMOS width (m)")
     parser.add_argument("--wp", type=float, default=gv.DEFAULT_WP, help="PMOS width (m)")
     parser.add_argument("--xor-style", choices=("nand", "andor"), default="nand")

@@ -225,6 +225,79 @@ def make_netlist(gate: str, input_bits: str, corner: dict, widths: dict) -> str:
     return "\n".join(lines)
 
 
+OP_TIMEOUT_S = 120
+# Long-transient fallback: the gate settles within ~100 us at these leakage
+# levels; 2 ms gives a margin of 20x (checked on the worst AND2 cases).
+TRAN_STOP = "2m"
+TRAN_SETTLE_TOL = 1e-4
+
+
+def _solve_path(output: str) -> str:
+    text = output.lower()
+    if "transient op started" in text:
+        return "transient_op"
+    if "source stepping completed" in text:
+        return "source"
+    if "gmin stepping completed" in text:
+        return "gmin"
+    return "direct"
+
+
+def _parse_op(output: str, gate: str, name: str) -> dict:
+    row = {}
+    for node in GATES[gate]["nodes"]:
+        match = re.search(rf"(?im)^v\({re.escape(node)}\)\s*=\s*([-+0-9.eE]+)", output)
+        if not match:
+            raise RuntimeError(f"Missing SPICE voltage v({node}) for {name}:\n{output}")
+        row[f"spice_{node}_V"] = float(match.group(1))
+    current = re.search(r"(?im)^i\(vdd\)\s*=\s*([-+0-9.eE]+)", output)
+    if not current:
+        raise RuntimeError(f"Missing SPICE VDD current for {name}:\n{output}")
+    row["spice_leakage"] = abs(float(current.group(1)))
+    return row
+
+
+def long_transient_netlist(netlist: str, gate: str, start: dict) -> str:
+    """Replace the .op analysis with a long transient from `start` node voltages.
+
+    Used only when ngspice's DC solvers (Newton, gmin and source stepping) all
+    fail. Its "transient op" fallback runs a very short transient and can stop
+    before the floating internal nodes settle (e.g. AND2 00, corner 148: 3.7e-9 A
+    instead of the settled 1.92e-10 A). The final point of a long transient is
+    the true DC operating point once it has stopped moving, which is checked.
+    """
+    nodes = GATES[gate]["nodes"]
+    lines = [line for line in netlist.splitlines() if not line.startswith(".nodeset")]
+    control = lines.index(".control")
+    ic = " ".join(f"v({n})={start[n]:.12g}" for n in nodes)
+    probes = " ".join(f"v({n})[L]" for n in nodes)
+    lines[control:] = [
+        f".ic {ic}",
+        # With reltol=1e-6 the transient can stall on tiny time steps. Gear
+        # integration with reltol=1e-4 settles in ~1 s and matches a strict
+        # (reltol=1e-6) transient to ~1e-5 where that one completes.
+        ".options method=gear reltol=1e-4",
+        ".control",
+        f"tran 10n {TRAN_STOP} 0 1u uic",
+        "let ivdd = i(vdd)",
+        "let L = length(ivdd) - 1",
+        "let P = floor(length(ivdd) * 0.9)",
+        f"print {probes} ivdd[L] ivdd[P]",
+        "quit",
+        ".endc",
+        "",
+        ".end",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def _run(ngspice: str, path: Path, timeout: int | None):
+    completed = subprocess.run([ngspice, "-b", str(path)], capture_output=True,
+                               text=True, timeout=timeout, check=False)
+    return completed.returncode, completed.stdout + "\n" + completed.stderr
+
+
 def run_spice(job: dict, ngspice: str) -> dict:
     gate, input_bits, index = job["gate"], job["inputs"], job["corner"]
     name = f"{gate.lower()}_{input_bits}_{index}"
@@ -232,28 +305,39 @@ def run_spice(job: dict, ngspice: str) -> dict:
     model_path = WORK_DIR / f"{name}.pm"
     netlist_path = WORK_DIR / f"{name}.cir"
     model_path.write_text(job["model_text"], encoding="utf-8")
-    netlist_path.write_text(
-        job["netlist"].replace("{MODEL}", model_path.resolve().as_posix()),
-        encoding="utf-8",
-    )
-    completed = subprocess.run(
-        [ngspice, "-b", str(netlist_path)],
-        # A few corners need ngspice's slower transient-op fallback.
-        capture_output=True, text=True, timeout=900, check=False,
-    )
-    output = completed.stdout + "\n" + completed.stderr
-    if completed.returncode != 0:
-        raise RuntimeError(f"ngspice failed for {name}:\n{output}")
+    netlist = job["netlist"].replace("{MODEL}", model_path.resolve().as_posix())
+    netlist_path.write_text(netlist, encoding="utf-8")
     row = {"gate": gate, "inputs": input_bits, "corner": index}
-    for node in GATES[gate]["nodes"]:
-        match = re.search(rf"(?im)v\({re.escape(node)}\)\s*=\s*([-+0-9.eE]+)", output)
-        if not match:
-            raise RuntimeError(f"Missing SPICE voltage v({node}) for {name}:\n{output}")
-        row[f"spice_{node}_V"] = float(match.group(1))
-    current = re.search(r"(?im)i\(vdd\)\s*=\s*([-+0-9.eE]+)", output)
-    if not current:
-        raise RuntimeError(f"Missing SPICE VDD current for {name}:\n{output}")
-    row["spice_leakage"] = abs(float(current.group(1)))
+
+    try:
+        code, output = _run(ngspice, netlist_path, OP_TIMEOUT_S)
+        if code != 0:
+            raise RuntimeError(f"ngspice failed for {name}:\n{output}")
+        path = _solve_path(output)
+        op = _parse_op(output, gate, name)
+    except subprocess.TimeoutExpired:
+        path, op = "timeout", None
+    if path in ("direct", "gmin", "source"):
+        return {**row, **op, "solve_path": path}
+
+    # DC solvers failed: settle the circuit with a long transient instead.
+    vdd = job["vdd"]
+    start = ({n: op[f"spice_{n}_V"] for n in GATES[gate]["nodes"]} if op
+             else {n: vdd / 2 for n in GATES[gate]["nodes"]})
+    tran_path = WORK_DIR / f"{name}_tran.cir"
+    tran_path.write_text(long_transient_netlist(netlist, gate, start), encoding="utf-8")
+    code, output = _run(ngspice, tran_path, 600)
+    values = re.findall(r"(?im)^\S+\[[lp]\]\s*=\s*([-+0-9.eE]+)", output)
+    nodes = GATES[gate]["nodes"]
+    if code != 0 or len(values) != len(nodes) + 2:
+        raise RuntimeError(f"Long transient failed for {name}:\n{output}")
+    values = [float(v) for v in values]
+    final, earlier = abs(values[-2]), abs(values[-1])
+    if abs(final - earlier) > TRAN_SETTLE_TOL * max(final, 1e-18):
+        raise RuntimeError(f"Long transient did not settle for {name}: {earlier} -> {final}")
+    row.update({f"spice_{n}_V": v for n, v in zip(nodes, values)})
+    row["spice_leakage"] = final
+    row["solve_path"] = f"{path}->long_tran"
     return row
 
 
@@ -268,7 +352,7 @@ def simulate_all(corners, widths, ngspice, workers) -> pd.DataFrame:
             for input_bits in spec["inputs"]:
                 jobs.append({
                     "gate": gate, "inputs": input_bits, "corner": index,
-                    "model_text": model_text,
+                    "model_text": model_text, "vdd": corner["vdd"],
                     "netlist": make_netlist(gate, input_bits, corner, widths),
                 })
     print(f"Running {len(jobs)} gate simulations on {workers} threads...")
