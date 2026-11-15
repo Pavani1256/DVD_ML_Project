@@ -43,6 +43,25 @@ python .\src\validation\circuit_validation.py --reuse-spice
   sub-models, so run `train_rail_models.py` again after it.
 * A saved model only loads with the scikit-learn version that wrote it (1.9.1, see `requirements.txt`).
 
+## Deliverables (spec, Section 6)
+
+| # | Deliverable | Where |
+|---|---|---|
+| 1 | Datasets: 4 CSVs × 10,000 rows, columns `vdd, temp, w, vd, vs, vg, vb, vth0, toxe, ndep, u0, xj, id, ig, is, ib` | `data/processed/{nmos_on,nmos_off,pmos_on,pmos_off}.csv`. Not committed (team rule): regenerate with the first and fifth commands of the run order (fixed seeds) |
+| 2 | Example netlists: one per transistor case, one per gate, the test circuit | `netlists/{nmos_on,nmos_off,pmos_on,pmos_off}.cir`, `netlists/gate_{inv,nand2,nor2,and2,or2}.cir`, `netlists/parity8.cir` |
+| 3 | Data check: Kirchhoff check per case + 3 trend plots | `results/data_check/kcl_summary.csv`, `trend_off_current_vs_temp.png`, `trend_off_current_vs_vth0.png`, `trend_gate_current_vs_toxe.png` |
+| 4 | Model comparison table (4 models × 4 cases; R², median, P95 on validation) | "Model comparison" below; `results/metrics/model_comparison.csv` |
+| 5 | Chosen models: test median/P95, predicted-vs-SPICE plot per case, 4 saved model files | "Chosen models" below; `results/plots/{case}_parity.png`; `saved_models/{case}.joblib` (not committed: regenerate with `train_models.py` + `train_rail_models.py`) |
+| 6 | Gate results table (18 cases: SPICE median, ML median, bias, median error, P95) | "Gate-level validation → Results" below; `results/gate_validation/gate_validation_metrics.csv` |
+| 7 | Gate parity plot (log axes) | `results/gate_validation/gate_validation_parity.png` |
+| 8 | Test-circuit results table + parity plot | [README_part_c.md](README_part_c.md); `results/circuit_validation/` |
+| 9 | Code that regenerates everything, in order, fixed seeds | Run order above |
+| 10 | Typed report | **Not in the repo yet.** Its content is in this README and README_part_c.md: setup (top of this file), data generation (Modelling method 5–6, data split, data check), models (Models / Modelling method / model comparison), gate and test-circuit results, error analysis and limitations |
+
+All committed netlists include `.options gmin=1e-18 abstol=1e-18 reltol=1e-6 vntol=1e-9`,
+except two early test files, `netlists/test.cir` (resistor divider) and
+`netlists/nmos_on_smoke.cir`, which are not deliverables.
+
 ## Models we are trying out
 
 Model	             Why try it?
@@ -204,29 +223,36 @@ remaining error comes from the transistor models alone.
 
 ### Results
 
-| Gate | Inputs | SPICE median (A) | ML median (A) | Median error (%) | P95 error (%) | Mean accuracy (%) |
-|---|---:|---:|---:|---:|---:|---:|
-| INV | 0 | 1.205e-10 | 1.206e-10 | 0.27 | 0.75 | 99.67 |
-| INV | 1 | 5.115e-12 | 5.171e-12 | 0.65 | 2.24 | 99.15 |
-| NAND2 | 00 | 2.157e-10 | 2.167e-10 | 0.31 | 0.82 | 99.65 |
-| NAND2 | 01 | 1.205e-10 | 1.206e-10 | 0.27 | 0.75 | 99.67 |
-| NAND2 | 10 | 1.125e-10 | 1.126e-10 | 0.27 | 0.78 | 99.68 |
-| NAND2 | 11 | 1.023e-11 | 1.034e-11 | 0.66 | 2.24 | 99.15 |
-| NOR2 | 00 | 2.410e-10 | 2.413e-10 | 0.27 | 0.75 | 99.68 |
-| NOR2 | 01 | 1.501e-10 | 1.498e-10 | 0.29 | 0.75 | 99.67 |
-| NOR2 | 10 | 4.693e-13 | 4.680e-13 | 0.99 | 3.32 | 98.73 |
-| NOR2 | 11 | 3.032e-14 | 3.002e-14 | 0.50 | 2.27 | 99.24 |
-| AND2 | 00 | 4.025e-10 | 4.013e-10 | 0.27 | 0.89 | 99.65 |
-| AND2 | 01 | 3.248e-10 | 3.256e-10 | 0.31 | 1.05 | 99.60 |
-| AND2 | 10 | 3.234e-10 | 3.241e-10 | 0.31 | 1.05 | 99.60 |
-| AND2 | 11 | 1.712e-10 | 1.712e-10 | 0.28 | 0.79 | 99.67 |
-| OR2 | 00 | 4.289e-10 | 4.286e-10 | 0.28 | 0.91 | 99.65 |
-| OR2 | 01 | 2.683e-10 | 2.685e-10 | 0.26 | 0.68 | 99.70 |
-| OR2 | 10 | 1.250e-10 | 1.249e-10 | 0.28 | 0.74 | 99.67 |
-| OR2 | 11 | 1.206e-10 | 1.208e-10 | 0.27 | 0.75 | 99.68 |
+| Gate | Inputs | SPICE median (A) | ML median (A) | Bias (A) | Median error (%) | P95 error (%) | Mean accuracy (%) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| INV | 0 | 1.205e-10 | 1.206e-10 | -8.36e-14 | 0.27 | 0.75 | 99.67 |
+| INV | 1 | 5.115e-12 | 5.171e-12 | 5.18e-16 | 0.65 | 2.24 | 99.15 |
+| NAND2 | 00 | 2.157e-10 | 2.167e-10 | -2.84e-13 | 0.31 | 0.82 | 99.65 |
+| NAND2 | 01 | 1.205e-10 | 1.206e-10 | -8.36e-14 | 0.27 | 0.75 | 99.67 |
+| NAND2 | 10 | 1.125e-10 | 1.126e-10 | -1.14e-13 | 0.27 | 0.78 | 99.68 |
+| NAND2 | 11 | 1.023e-11 | 1.034e-11 | 1.03e-15 | 0.66 | 2.24 | 99.15 |
+| NOR2 | 00 | 2.410e-10 | 2.413e-10 | -1.52e-13 | 0.27 | 0.75 | 99.68 |
+| NOR2 | 01 | 1.501e-10 | 1.498e-10 | -1.02e-13 | 0.29 | 0.75 | 99.67 |
+| NOR2 | 10 | 4.693e-13 | 4.680e-13 | 8.55e-17 | 0.99 | 3.32 | 98.73 |
+| NOR2 | 11 | 3.032e-14 | 3.002e-14 | -7.28e-17 | 0.50 | 2.27 | 99.24 |
+| AND2 | 00 | 4.025e-10 | 4.013e-10 | -1.71e-13 | 0.27 | 0.89 | 99.65 |
+| AND2 | 01 | 3.248e-10 | 3.256e-10 | -1.55e-14 | 0.31 | 1.05 | 99.60 |
+| AND2 | 10 | 3.234e-10 | 3.241e-10 | -1.33e-13 | 0.31 | 1.05 | 99.60 |
+| AND2 | 11 | 1.712e-10 | 1.712e-10 | -4.22e-14 | 0.28 | 0.79 | 99.67 |
+| OR2 | 00 | 4.289e-10 | 4.286e-10 | -1.02e-14 | 0.28 | 0.91 | 99.65 |
+| OR2 | 01 | 2.683e-10 | 2.685e-10 | -1.54e-13 | 0.26 | 0.68 | 99.70 |
+| OR2 | 10 | 1.250e-10 | 1.249e-10 | -6.55e-14 | 0.28 | 0.74 | 99.67 |
+| OR2 | 11 | 1.206e-10 | 1.208e-10 | -6.89e-14 | 0.27 | 0.75 | 99.68 |
 
 **Overall: 99.53% mean accuracy, 99.67% median (0.33% median error, 1.44% P95). 89.9% of cases are within ±1%, 99.94% within ±5% and 100% within ±10%.**
 Every one of the 18 cases is at 98.7% or above (lowest: NOR2 `10`, 98.73%).
+Bias = mean(ML − SPICE). It is at most 0.13% of the SPICE median in every case (mostly slightly negative).
+
+Gate parity plot (ML vs SPICE leakage, all 3,600 cases, log axes):
+`results/gate_validation/gate_validation_parity.png`. Per-case rows (SPICE leakage, ML leakage,
+SPICE output voltage and internal node voltages x/y/z, corner conditions):
+`results/gate_validation/gate_validation_raw.csv`. The ML prediction uses the SPICE node
+voltages as its transistor bias (spec step 4), so the ML node voltages are the same values.
 
 ### Fixes compared with the earlier gate validation
 
@@ -263,6 +289,17 @@ shows which device currents set the gate leakage:
 * PMOS OFF `ib`: NOR2 `11`.
 * NMOS ON `ig`: AND2 and OR2.
 * NMOS OFF currents barely matter for this card.
+
+### Error by corner conditions
+
+* The largest single errors are all NOR2 `10`/`11` (3.9–6.2%), mostly at high VDD (0.97–0.99 V)
+  and above room temperature: the leakage there is tiny (3e-14 to 5e-13 A) and set by the
+  stacked PMOS OFF device.
+* The corners with the highest median error (0.8–1.4%: corners 70, 100, 129, 30, 72) all have
+  low VDD (0.81–0.87 V).
+* Otherwise there is no strong trend: the correlation of the error with temperature, VDD,
+  NMOS vth0 or PMOS vth0 is below 0.05. By quartile, the median error ranges over 0.28–0.37%
+  (temperature), 0.29–0.36% (VDD) and 0.28–0.40% (NMOS vth0, highest at high vth0).
 
 ### Remaining error
 
