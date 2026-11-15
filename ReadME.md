@@ -1,6 +1,6 @@
 tech node : 16nm_LP
 VDD : 0.9
-Testing : 8-bit parity checker (Part C: see [README_part_c.md](README_part_c.md); 99.59% mean accuracy)
+Testing : 8-bit parity checker (Part C: see [README_part_c.md](README_part_c.md); 99.98% mean accuracy)
 Simulator : ngspice-46 for the gate/circuit SPICE references in `results/` (transistor datasets: 44.2 and 46);
 `ngspice_con.exe` on Windows, any `ngspice` on `PATH` on Linux
 
@@ -21,8 +21,8 @@ python .\src\spice\run_dataset.py --suffix _rail         # simulate -> data/proc
 python .\src\spice\run_dataset.py --suffix _stack        # simulate -> data/processed/{case}_stack.csv
 python .\src\analysis\data_check.py                      # Kirchhoff check + 3 trend plots
 python .\train_models.py                                   # train, compare, select, test, save (~2 h on 8 cores)
-python .\src\spice\generate_rail_dataset.py --workers 8  # 160,000 operating-point samples -> data/processed/rail_samples.csv.gz (~15 min)
-python .\train_rail_models.py --jobs 8                      # operating-point sub-models -> added to saved_models/*.joblib (~7 min)
+python .\src\spice\generate_rail_dataset.py --workers 8  # 256,000 operating-point samples -> data/processed/rail_samples.csv.gz (~15 min)
+python .\train_rail_models.py --jobs 8                      # operating-point sub-models -> added to saved_models/*.joblib (~10 min)
 python .\src\spice\write_example_netlists.py --check     # deliverable 2: netlists/*.cir, checked with ngspice
 python .\src\validation\gate_validation.py --corners 200 --reuse-spice
 python .\src\validation\circuit_validation.py --reuse-spice
@@ -106,16 +106,34 @@ IMPORTANT (should include in the report)
 6. **Operating-point sub-models** (`generate_rail_dataset.py`, `train_rail_models.py`).
    In static CMOS a transistor's drain and source sit exactly at a rail, or (in a series
    stack) one sits at a rail and the other at an internal node. For these 8 configurations
-   (`00 01 10 11` = drain/source at 0/VDD, `m0 m1 0m 1m` = one terminal free), small MLPs
-   are trained on 160,000 extra single-transistor SPICE samples at exactly those
-   configurations (40,000 per case; seeds 4041/5051), with 20% of the corners held out.
-   A sub-model replaces the general prediction for its (configuration, terminal) only if, on
-   the held-out corners, (a) its median error is < 10% and P95 <= 50%, and (b) its mean
-   error is lower than the general model's on the same samples. 67 of 77 pass (a);
-   29 also pass (b) and are kept (`results/metrics/rail_submodels_metrics.csv`). The
-   general models already train on rail/stack data, so they win on the other 38. The
-   choice uses single-transistor data only, never gate or circuit results. Sub-models live
-   inside the four model files (`model.rail_models`), so there are still four models.
+   (`00 01 10 11` = drain/source at 0/VDD, `m0 m1 0m 1m` = one terminal free), sub-models
+   are trained on 256,000 extra single-transistor SPICE samples at exactly those
+   configurations (64,000 per case; seeds 4041/5051/6061: exact rails, free node uniform,
+   free node 0.1%–50% of VDD from a rail), with 20% of the corners held out.
+   * **Candidates** per (case, configuration, terminal): the original MLP on the process
+     parameters, and polynomial ridge regressions (degree 2–4) on BSIM4-style physics
+     estimates computed at the operating point (effective threshold, EKV channel current,
+     gate-tunnelling exponents, 1/T, Vth0/T, log Weff; `rail_phys_features` in
+     `src/transistor_ml.py`), with log10|I| normalised by W (junction currents) or by
+     Weff = W − 2·wint (channel and gate currents). Railed terminals are snapped to the
+     exact rail for these inputs (an ON device's drain inside a gate sits ~10 µV off).
+     The candidate is chosen on an inner split of the *training* corners.
+   * At a fixed operating point the currents are smooth functions of only VDD, T, W and
+     the five process parameters, and the physics estimates already carry most of the
+     dependence, so the polynomials are far more accurate than the MLPs: gate tunnelling
+     drops from ~1% to ~0.001% held-out error, OFF channel currents from ~1.2% to ~0.2–0.4%.
+   * **Keep rule**: a sub-model replaces the general prediction only if, on the held-out
+     corners, (a) its median error is < 10% and P95 <= 50%, and (b) its mean error is lower
+     than the general model's on the same samples. 50 are kept (37 polynomial, 13 MLP;
+     `results/metrics/rail_submodels_metrics.csv`).
+   * **Single-device KCL**: for OFF devices, the drain or source current may instead be
+     computed as −(sum of the other three terminals), e.g. when it is subthreshold plus
+     gate-drain tunnelling. Used for 9 configurations, each only where it lowers the
+     held-out error (`model.rail_kcl`). Kirchhoff's law holds to < 1e-4 in the SPICE data.
+   * All choices use single-transistor data only, never gate or circuit results. The
+     sub-models live inside the four model files, so there are still four models. With
+     the sub-models, every original edge/rail/stack test set is as good or better
+     (`results/metrics/rail_submodels_test_effect.csv`).
 7. **Zero-bias gate rule**: `ig = 0` when the gate is within 1 mV of every other terminal
    (no oxide field, so no tunnelling). It does not change the current results (our general
    models were already right there), but guards against spurious predictions.
@@ -206,27 +224,31 @@ remaining error comes from the transistor models alone.
 
 | Gate | Inputs | SPICE median (A) | ML median (A) | Median error (%) | P95 error (%) | Mean accuracy (%) |
 |---|---:|---:|---:|---:|---:|---:|
-| INV | 0 | 1.205e-10 | 1.206e-10 | 0.27 | 0.75 | 99.67 |
-| INV | 1 | 5.115e-12 | 5.171e-12 | 0.65 | 2.24 | 99.15 |
-| NAND2 | 00 | 2.157e-10 | 2.167e-10 | 0.31 | 0.82 | 99.65 |
-| NAND2 | 01 | 1.205e-10 | 1.206e-10 | 0.27 | 0.75 | 99.67 |
-| NAND2 | 10 | 1.125e-10 | 1.126e-10 | 0.27 | 0.78 | 99.68 |
-| NAND2 | 11 | 1.023e-11 | 1.034e-11 | 0.66 | 2.24 | 99.15 |
-| NOR2 | 00 | 2.410e-10 | 2.413e-10 | 0.27 | 0.75 | 99.68 |
-| NOR2 | 01 | 1.501e-10 | 1.498e-10 | 0.29 | 0.75 | 99.67 |
-| NOR2 | 10 | 4.693e-13 | 4.680e-13 | 0.99 | 3.32 | 98.73 |
-| NOR2 | 11 | 3.032e-14 | 3.002e-14 | 0.50 | 2.27 | 99.24 |
-| AND2 | 00 | 4.025e-10 | 4.013e-10 | 0.27 | 0.89 | 99.65 |
-| AND2 | 01 | 3.248e-10 | 3.256e-10 | 0.31 | 1.05 | 99.60 |
-| AND2 | 10 | 3.234e-10 | 3.241e-10 | 0.31 | 1.05 | 99.60 |
-| AND2 | 11 | 1.712e-10 | 1.712e-10 | 0.28 | 0.79 | 99.67 |
-| OR2 | 00 | 4.289e-10 | 4.286e-10 | 0.28 | 0.91 | 99.65 |
-| OR2 | 01 | 2.683e-10 | 2.685e-10 | 0.26 | 0.68 | 99.70 |
-| OR2 | 10 | 1.250e-10 | 1.249e-10 | 0.28 | 0.74 | 99.67 |
-| OR2 | 11 | 1.206e-10 | 1.208e-10 | 0.27 | 0.75 | 99.68 |
+| INV | 0 | 1.205e-10 | 1.204e-10 | 0.005 | 0.18 | 99.97 |
+| INV | 1 | 5.115e-12 | 5.110e-12 | 0.128 | 0.30 | 99.86 |
+| NAND2 | 00 | 2.157e-10 | 2.157e-10 | 0.001 | 0.03 | 99.99 |
+| NAND2 | 01 | 1.205e-10 | 1.204e-10 | 0.005 | 0.17 | 99.97 |
+| NAND2 | 10 | 1.125e-10 | 1.125e-10 | 0.004 | 0.10 | 99.98 |
+| NAND2 | 11 | 1.023e-11 | 1.022e-11 | 0.122 | 0.29 | 99.87 |
+| NOR2 | 00 | 2.410e-10 | 2.408e-10 | 0.005 | 0.17 | 99.97 |
+| NOR2 | 01 | 1.501e-10 | 1.501e-10 | 0.005 | 0.09 | 99.98 |
+| NOR2 | 10 | 4.693e-13 | 4.691e-13 | 0.131 | 0.48 | 99.82 |
+| NOR2 | 11 | 3.032e-14 | 3.031e-14 | 0.218 | 1.08 | 99.65 |
+| AND2 | 00 | 4.025e-10 | 4.025e-10 | 0.003 | 0.03 | 99.99 |
+| AND2 | 01 | 3.248e-10 | 3.248e-10 | 0.007 | 0.07 | 99.98 |
+| AND2 | 10 | 3.234e-10 | 3.234e-10 | 0.006 | 0.05 | 99.99 |
+| AND2 | 11 | 1.712e-10 | 1.711e-10 | 0.015 | 0.18 | 99.96 |
+| OR2 | 00 | 4.289e-10 | 4.286e-10 | 0.009 | 0.08 | 99.98 |
+| OR2 | 01 | 2.683e-10 | 2.682e-10 | 0.005 | 0.12 | 99.98 |
+| OR2 | 10 | 1.250e-10 | 1.249e-10 | 0.006 | 0.14 | 99.97 |
+| OR2 | 11 | 1.206e-10 | 1.205e-10 | 0.005 | 0.18 | 99.97 |
 
-**Overall: 99.53% mean accuracy, 99.67% median (0.33% median error, 1.44% P95). 89.9% of cases are within ±1%, 99.94% within ±5% and 100% within ±10%.**
-Every one of the 18 cases is at 98.7% or above (lowest: NOR2 `10`, 98.73%).
+**Overall: 99.94% mean accuracy, 99.99% median (0.009% median error, 0.26% P95). 99.58% of cases are within ±1% and 100% within ±5% (worst case 3.0%).**
+Every one of the 18 cases is at 99.65% or above (lowest: NOR2 `11`, whose leakage is only ~3e-14 A).
+
+Overfitting check: on 200 *new* corners (corner seed 8 instead of 7, never used for any
+choice) the same models give 99.94% (excluding 10 references where ngspice fell back to its
+short transient op; 99.82% including them). The original 200 corners give 99.94%.
 
 ### Fixes compared with the earlier gate validation
 
@@ -251,7 +273,8 @@ Progression of the mean gate accuracy:
 | SPICE references re-solved (unsettled transient-op points fixed, ngspice-46) | 98.98% |
 | + stack-node training samples | 99.12% |
 | + operating-point sub-models, all 67 that pass the thresholds | 99.39% |
-| + sub-models kept only where they beat the general model (29) | **99.53%** |
+| + sub-models kept only where they beat the general model (29) | 99.53% |
+| + physics-input polynomial sub-models, single-device KCL, near-rail one-rail data | **99.94%** |
 
 ### What limits the accuracy
 
@@ -266,12 +289,12 @@ shows which device currents set the gate leakage:
 
 ### Remaining error
 
-* **NOR2 `10`** (98.73%) is the weakest case: its leakage is tiny (~5e-13 A) and set by the
-  stacked PMOS OFF device with one terminal at the internal node.
-* **INV `1` / NAND2 `11`** (99.15%) and **NOR2 `11`** (99.24%) are next; everything else is 99.6–99.7%.
-* On the stack-node test set the kept sub-models are slightly worse than the general model for
-  NMOS OFF `is` (median 1.38% -> 2.09%); the uniform test set is unchanged
-  (`results/metrics/rail_submodels_test_effect.csv`). The test tables above are from
-  `train_models.py`, i.e. the general models only.
+* Feeding exact single-transistor SPICE currents into the gate procedure gives 99.98%, so
+  the models now leave about 0.04 points on the table.
+* **NOR2 `11`** (99.65%) and **NOR2 `10`** (99.82%) are the weakest cases: their leakage is
+  tiny (3e-14 and 5e-13 A) and set by the stacked PMOS OFF devices with one terminal at the
+  internal node (one-rail configurations, where the sub-models are less accurate than at
+  exact rails). **INV `1` / NAND2 `11`** (99.86%) are next; everything else is 99.96–99.99%.
+* The test tables above are from `train_models.py`, i.e. the general models only.
 * Devices with both drain and source at internal nodes (`mm`) use the general models only.
   They do not occur in these gates, but would in deeper stacks.

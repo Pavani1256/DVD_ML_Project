@@ -8,11 +8,15 @@ the gate-level error. This dataset trains the operating-point sub-models
 (train_rail_models.py). It contains single-transistor SPICE results only: no
 gate or circuit simulation is used for training.
 
-Two sets, each over all four cases (NMOS/PMOS, ON/OFF; vg and vb as in the
+Three sets, each over all four cases (NMOS/PMOS, ON/OFF; vg and vb as in the
 main datasets):
-  exact     (vd, vs) in {0, VDD}^2                -> configs 00 01 10 11
-  one_rail  one of vd, vs at a rail, the other    -> configs m0 m1 0m 1m
-            uniform in [0, VDD] ("m" = free)
+  exact          (vd, vs) in {0, VDD}^2             -> configs 00 01 10 11
+  one_rail       one of vd, vs at a rail, the other -> configs m0 m1 0m 1m
+                 uniform in [0, VDD] ("m" = free)
+  one_rail_near  as one_rail, but the free node is 0.1 %-50 % of VDD from
+                 a rail (log-uniform distance, either rail), like the
+                 internal node of a NAND2/NOR2 stack. Its corner numbers
+                 start at 100000 so they never clash with one_rail's.
 VDD, temperature, W and the five process parameters follow the main dataset
 distributions (generate_samples.py), with their own fixed seeds. One draw of
 VDD/T/process ("corner") is shared by the 16 devices (4 cases x 4 configs)
@@ -29,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -45,10 +50,12 @@ OUTPUT = ROOT / "data" / "processed" / "rail_samples.csv.gz"
 WORK_DIR = ROOT / "data" / "spice_work" / "rail"
 VDD_NOMINAL = 0.9
 SETS = {
-    # name: (seed, number of corners, configs)
-    "exact": (4041, 4000, [(0, 0), (0, 1), (1, 0), (1, 1)]),
-    "one_rail": (5051, 6000, [("m", 0), ("m", 1), (0, "m"), (1, "m")]),
+    # name: (seed, number of corners, configs, free-node distribution, first corner number)
+    "exact": (4041, 4000, [(0, 0), (0, 1), (1, 0), (1, 1)], "uniform", 0),
+    "one_rail": (5051, 6000, [("m", 0), ("m", 1), (0, "m"), (1, "m")], "uniform", 0),
+    "one_rail_near": (6061, 6000, [("m", 0), ("m", 1), (0, "m"), (1, "m")], "near_rail", 100000),
 }
+NEAR_RAIL_DISTANCE = (1e-3, 0.5)   # free node distance from a rail, fraction of VDD
 NOMINAL = {
     "nmos": {"vth0": 0.68191, "toxe": 1.20e-9, "ndep": 7.0e18, "u0": 0.028, "xj": 5.0e-9},
     "pmos": {"vth0": -0.6862, "toxe": 1.22e-9, "ndep": 4.4e18, "u0": 0.0075, "xj": 7.2e-9},
@@ -61,10 +68,11 @@ CASES = {
 NUMBER = r"([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)"
 
 
-def draw_corners(seed: int, n_corners: int, configs) -> list[dict]:
+def draw_corners(seed: int, n_corners: int, configs, free_mode: str = "uniform",
+                 first_corner: int = 0) -> list[dict]:
     rng = np.random.default_rng(seed)
     corners = []
-    for index in range(n_corners):
+    for index in range(first_corner, first_corner + n_corners):
         vdd = rng.uniform(0.9 * VDD_NOMINAL, 1.1 * VDD_NOMINAL)
         temp = rng.uniform(-40, 125)
         process = {
@@ -76,7 +84,12 @@ def draw_corners(seed: int, n_corners: int, configs) -> list[dict]:
         for case, (transistor, vg, vb) in CASES.items():
             for vd, vs in configs:
                 if "m" in (vd, vs):
-                    free = rng.uniform(0, 1)
+                    if free_mode == "near_rail":
+                        low, high = np.log10(NEAR_RAIL_DISTANCE)
+                        distance = 10.0 ** rng.uniform(low, high)
+                        free = distance if rng.uniform() < 0.5 else 1.0 - distance
+                    else:
+                        free = rng.uniform(0, 1)
                     vd = free if vd == "m" else vd
                     vs = free if vs == "m" else vs
                     config = ("m" if isinstance(vd, float) else str(vd)) + \
@@ -143,13 +156,13 @@ def simulate_corner(corner: dict, set_name: str, ngspice: str) -> list[dict]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--ngspice", default="ngspice_con.exe")
+    parser.add_argument("--ngspice", default=shutil.which("ngspice") or "ngspice_con.exe")
     parser.add_argument("--workers", type=int, default=8)
     args = parser.parse_args()
 
     frames = []
-    for set_name, (seed, n_corners, configs) in SETS.items():
-        corners = draw_corners(seed, n_corners, configs)
+    for set_name, (seed, n_corners, configs, free_mode, first_corner) in SETS.items():
+        corners = draw_corners(seed, n_corners, configs, free_mode, first_corner)
         start = time.time()
         print(f"{set_name}: {n_corners} corners x 16 devices (seed {seed})...", flush=True)
         with ThreadPoolExecutor(max_workers=args.workers) as pool:

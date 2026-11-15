@@ -23,15 +23,21 @@ Prediction pipeline for one transistor case (e.g. NMOS OFF):
    In static CMOS every transistor terminal sits exactly at a rail (0 or
    VDD) or, for series-stack devices, one terminal sits at a rail and the
    other at an internal node. The uniform datasets almost never sample those
-   exact points, and there the general regressors are 3-8 % off. For a
+   exact points, and there the general regressors are 0.5-2 % off. For a
    device whose drain and source are both within RAIL_TOLERANCE of a rail
    ("exact-rail" config, e.g. "01" = drain at 0, source at VDD), or whose
-   drain or source is (the other being free, "m"), a small MLP trained on
+   drain or source is (the other being free, "m"), a sub-model trained on
    single-transistor SPICE samples at exactly that configuration replaces
-   the general prediction for the terminals it was kept for. The models
-   live in ``TransistorModel.rail_models`` {(config, terminal): (model, sign)}.
+   the general prediction for the terminals it was kept for: either a small
+   MLP on the process parameters, or a polynomial ridge on BSIM4-style
+   physics estimates (RailPolyModel), whichever validated better. The
+   models live in ``TransistorModel.rail_models``
+   {(config, terminal): (model, sign)}.
 6. Zero-bias gate rule. ig is set to 0 when the gate is within 1 mV of every
    other terminal (no oxide field, so no tunnelling current).
+7. Single-device Kirchhoff's law (optional, ``TransistorModel.rail_kcl``
+   {config: terminal}). For some OFF-device configurations the drain or
+   source current is computed as minus the sum of the other three terminals.
 """
 
 from __future__ import annotations
@@ -107,6 +113,70 @@ def rail_features(X, config: str) -> np.ndarray:
 
 def device_of(case: str) -> str:
     return case.split("_")[0]
+
+
+# Physics-input polynomial sub-models (train_rail_models.py). At a fixed
+# operating point the terminal currents are smooth functions of VDD, T, W and
+# the process parameters, and most of their variation is captured by the same
+# BSIM4-style estimates the general models use (effective threshold, EKV
+# channel current, gate-tunnelling exponents). A low-order polynomial ridge on
+# those inputs, with log10|I| normalised by the device width, fits them far
+# more accurately than an MLP on the raw parameters (e.g. gate current at an
+# exact-rail point: ~1 % -> ~0.001 % held-out error).
+RAIL_PHYS_INPUTS = ["inv_temp_K", "vth_eff", "log10_i_ekv", "overdrive_over_nvt",
+                    "log_tunnel_gs", "log_tunnel_gd", "log_tunnel_gb"]
+RAIL_PHYS_INPUTS_FREE = ["vds", "vgs", "vbs", "log10_drain_factor"]   # one-rail only
+WINT_RAIL = 5e-9   # m, the model card's wint: Weff = W - 2 * WINT
+
+
+def rail_width_log10(X, norm: str) -> np.ndarray:
+    """log10 of the width a current is normalised by: W ('w') or Weff ('weff')."""
+    w = np.asarray(X, dtype=float)[:, FEATURES.index("w")]
+    return np.log10(w - 2 * WINT_RAIL if norm == "weff" else w)
+
+
+def rail_phys_features(X, config: str, device: str) -> np.ndarray:
+    """Sub-model inputs: rail_features plus log Weff, 1/Weff, the physics
+    estimates above, Vth0/T and VDD/T.
+
+    The physics estimates are computed with every railed drain/source snapped
+    to its exact rail. A config tolerates up to RAIL_TOLERANCE of offset (an
+    ON transistor's drain inside a gate sits ~10 uV off the rail), but a
+    small non-zero Vds moves some estimates (e.g. the log drain factor) far
+    outside the exact-rail training range."""
+    X = np.array(X, dtype=float, copy=True)
+    vdd = X[:, FEATURES.index("vdd")]
+    for level, column in zip(config, (_VD, _VS)):
+        if level == "0":
+            X[:, column] = 0.0
+        elif level == "1":
+            X[:, column] = vdd
+    F, _ = model_features(X, device)
+    names = RAIL_PHYS_INPUTS + (RAIL_PHYS_INPUTS_FREE if "m" in config else [])
+    P = F[:, [MODEL_FEATURE_NAMES.index(n) for n in names]]
+    weff = X[:, FEATURES.index("w")] - 2 * WINT_RAIL
+    kelvin = X[:, FEATURES.index("temp")] + 273.15
+    return np.column_stack([
+        rail_features(X, config), np.log(weff), 1e-9 / weff, P,
+        np.abs(X[:, FEATURES.index("vth0")]) / kelvin,
+        X[:, FEATURES.index("vdd")] / kelvin,
+    ])
+
+
+class RailPolyModel:
+    """Polynomial ridge on rail_phys_features, predicting log10|I| - log10(width)."""
+
+    takes_raw_inputs = True
+
+    def __init__(self, pipeline, config: str, device: str, norm: str):
+        self.pipeline = pipeline
+        self.config = config
+        self.device = device
+        self.norm = norm
+
+    def predict_log10(self, X) -> np.ndarray:
+        Z = rail_phys_features(X, self.config, self.device)
+        return self.pipeline.predict(Z) + rail_width_log10(X, self.norm)
 
 
 def canonical_swap_mask(X: np.ndarray, device: str) -> np.ndarray:
@@ -427,12 +497,28 @@ class TransistorModel:
                     entry = rail_models.get((str(config), terminal))
                     if entry is None:
                         continue
+                    model, sign = entry
+                    if getattr(model, "takes_raw_inputs", False):
+                        Y[rows, t] = sign * 10.0 ** model.predict_log10(X[rows])
+                        continue
                     if Z is None:
                         Z = rail_features(X[rows], str(config))
-                    model, sign = entry
                     Y[rows, t] = sign * 10.0 ** model.predict(Z)
         gate_drop = np.max(np.abs(X[:, [_VD, _VS, _VB]] - X[:, [_VG]]), axis=1)
         Y[gate_drop < ZERO_BIAS_GATE_TOLERANCE, _IG] = 0.0
+        # Kirchhoff's law for a single device: id + ig + is + ib = 0. For some
+        # OFF-device configurations the drain (or source) current is a sum of
+        # two mechanisms (subthreshold + gate-drain tunnelling) and is more
+        # accurate as minus the sum of the other three terminals.
+        rail_kcl = getattr(self, "rail_kcl", None)
+        if rail_kcl:
+            configs = rail_config(X)
+            for config, terminal in rail_kcl.items():
+                rows = configs == config
+                if rows.any():
+                    t = TARGETS.index(terminal)
+                    others = [k for k in range(len(TARGETS)) if k != t]
+                    Y[rows, t] = -Y[np.ix_(rows, others)].sum(axis=1)
         return Y
 
 
